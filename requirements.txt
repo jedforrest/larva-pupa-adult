@@ -1,2 +1,10 @@
+# requirements.txt is for managing python requirements
+
+# To install requirements do:
+#
+#	pip install -r requirements.txt
+#
+# See README.md
+
 numpy
 matplotlib
