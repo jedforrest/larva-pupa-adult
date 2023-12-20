@@ -12,6 +12,9 @@ def step(l, p, a, round_population_count=True):
     # Eqn (3)
     a_new = a*(1 - P.mu_a) + p* exp(-( P.c_pa*a ))
 
+    # Do we assume population must be an integer?
+    # If round_population_count=True On the 100th gen: 99 24.000000 19.000000 376.000000
+    # If round_population_count=False On the 100th gen: 99 22.765323 18.092817 384.228320
     if round_population_count:
         l_new = round(l_new)
         p_new = round(p_new)
