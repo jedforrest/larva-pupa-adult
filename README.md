@@ -1,12 +1,9 @@
-# lpa
-larva-pupa-adult
+# larva-pupa-adult
 
-# Setup
-
-## Linux instructions
+## Setup
 
 ```bash
 python3 -m venv venv
-. vnev/bin/activate
-pip install -r requirements
+. venv/bin/activate
+pip install -r requirements.txt
 ```
