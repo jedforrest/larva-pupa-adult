@@ -22,11 +22,12 @@ def step(l, p, a, round_population_count=True):
 
     return l_new, p_new, a_new
 
-# Simulation
-number_of_generations = 100 
-larva_population = P.initial_larva_population
-pupa_population = P.initial_pupa_population
-adult_population = P.initial_adult_population
-for gen in range(number_of_generations):
-    print("%d %f %f %f" % (gen, larva_population, pupa_population, adult_population))
-    larva_population, pupa_population, adult_population = step(larva_population, pupa_population, adult_population)
+with open('lpa-data.txt', 'w') as lpa_data_file:
+    # Simulation
+    number_of_generations = 100 
+    larva_population = P.initial_larva_population
+    pupa_population = P.initial_pupa_population
+    adult_population = P.initial_adult_population
+    for gen in range(number_of_generations):
+        print("%d %f %f %f" % (gen, larva_population, pupa_population, adult_population), file=lpa_data_file)
+        larva_population, pupa_population, adult_population = step(larva_population, pupa_population, adult_population)
