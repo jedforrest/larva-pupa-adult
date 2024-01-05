@@ -1,8 +1,0 @@
-We are going to use SageMath in a Jupyter Notebook
-
-* Install SageMath: https://doc.sagemath.org/html/en/installation/index.html
-* Install Jupyter Notebook: https://jupyter.org/install
-* Launch it: https://doc.sagemath.org/html/en/installation/launching.html. In particular `sage -n jupyter`
-* We will use MSolve, download from here: https://github.com/algebraic-solving/msolve
-
-Tutorials are numbered 1-
