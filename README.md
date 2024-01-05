@@ -47,7 +47,7 @@ cd msolve/
 make 
 ```
 
-Msolve can be used to solve polynomial systems of equations. Consider $`x^2 + y^2 = 4`$ and $`x = y`$. See [msolve-input-example.txt](./msolve-input-example.txt). The command `msolve -f msolve-input-example.txt` outputs:
+Msolve can be used to solve polynomial systems of equations. Consider $`x^2 + y^2 = 4`$ and $`x = y`$. See [msolve-input-example.txt](/msolve-input-example.txt). The command `msolve -f msolve-input-example.txt` outputs:
 
 ```
 [0, [1,
