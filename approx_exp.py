@@ -46,5 +46,5 @@ def exp_chebyshev_nodes(interval, variable, degree):
 
 if __name__ == '__main__':
     from sympy.abc import x
-    print(exp_chebyshev_nodes(Interval(-3, 2), x, 5))
-    print(exp_taylor_interval(Interval(-3, 2), x, 5))
+    print(exp_chebyshev_nodes(Interval(-1, 0), x, 3))
+    print(exp_taylor_interval(Interval(-1, 0), x, 3))
