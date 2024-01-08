@@ -10,7 +10,7 @@ This repository documents this work.
 
 * [larva_pupa_adult_params.py](/larva_pupa_adult_params.py) -- parameters as they are in the paper constantino_chaotic_dynamics_science_1997.pdf
 * [lpa_simulation.py](/lpa_simulation.py) -- run the simulation using floating point numbers
-* [lpa_simulation.output.txt](/lpa_simulation.output.txt) -- output of lpa_simulation.py
+* [lpa_simulation.output.csv](/lpa_simulation.output.csv) -- output of lpa_simulation.py
 
 ## Setup:
 
