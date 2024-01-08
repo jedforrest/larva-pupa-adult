@@ -13,12 +13,11 @@ def step(l, p, a):
     a_new = a*(1 - P.mu_a) + p* exp(-( P.c_pa*a ))
     return l_new, p_new, a_new
 
-with open('lpa-data.txt', 'w') as lpa_data_file:
-    # Simulation
-    number_of_generations = 10
-    larva_population = P.initial_larva_population
-    pupa_population = P.initial_pupa_population
-    adult_population = P.initial_adult_population
-    for gen in range(number_of_generations):
-        print("%d %f %f %f" % (gen, larva_population, pupa_population, adult_population), file=lpa_data_file)
-        larva_population, pupa_population, adult_population = step(larva_population, pupa_population, adult_population)
+# Simulation
+number_of_generations = 10
+larva_pop = P.initial_larva_population
+pupa_pop = P.initial_pupa_population
+adult_pop = P.initial_adult_population
+for gen in range(number_of_generations):
+    print("%d,%f,%f,%f" % (gen, larva_pop, pupa_pop, adult_pop))
+    larva_pop, pupa_pop, adult_pop = step(larva_pop, pupa_pop, adult_pop)
