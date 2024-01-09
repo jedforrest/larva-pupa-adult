@@ -1,0 +1,4 @@
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+HomotopyContinuation = "f213a82b-91d6-5c5d-acf7-10f1c761b327"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
