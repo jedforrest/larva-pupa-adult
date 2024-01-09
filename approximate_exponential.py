@@ -17,7 +17,7 @@ def rational_approx(p, x):
 def exp_taylor(variable, basepoint, degree):
     """Calculate taylor series, dropping error term and representing as a polynomial over QQ"""
     p = series(exp(variable), x=variable, x0=basepoint, n=degree).removeO().as_poly(variable)
-    print("exp taylor", p)
+    print("??? exp taylor", p)
     return p
 
 
@@ -41,6 +41,8 @@ def exp_taylor_interval(interval, variable, degree):
     """Approximate exp on an interval using taylor around middle. """
     interval_center = N(interval.start + interval.end) / 2
     print("> Taylor interval", interval, interval_center)
+    p = exp_taylor(variable, interval_center, degree)
+    print("???", p, variable, interval_center, degree)
     return exp_taylor(variable, interval_center, degree)
 
 def exp_chebyshev_nodes(interval, variable, degree):
