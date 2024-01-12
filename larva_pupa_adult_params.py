@@ -5,8 +5,6 @@
 #    Science 275.5298 (1997): 389-391.
 #
 # All rates are per two weeks.
-
-
 birth_rate = 6.598
 cannibalism_of_eggs_by_larva_rate = 1.209e-2
 cannibalism_of_eggs_by_adult_rate = 1.155e-2

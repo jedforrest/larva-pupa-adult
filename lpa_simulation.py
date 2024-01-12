@@ -19,5 +19,5 @@ larva_pop = P.initial_larva_population
 pupa_pop = P.initial_pupa_population
 adult_pop = P.initial_adult_population
 for gen in range(number_of_generations):
-    print("%d,%f,%f,%f" % (gen, larva_pop, pupa_pop, adult_pop))
+    print("%d,%s,%s,%s" % (gen, str(larva_pop), str(pupa_pop), str(adult_pop)))
     larva_pop, pupa_pop, adult_pop = step(larva_pop, pupa_pop, adult_pop)

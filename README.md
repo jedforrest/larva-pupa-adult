@@ -12,15 +12,22 @@ This repository documents this work.
 * [lpa_simulation.py](/lpa_simulation.py) -- run the simulation using floating point numbers
 * [lpa_simulation.output.csv](/lpa_simulation.output.csv) -- output of lpa_simulation.py
 
-## Setup:
-
-This work is being done in Python. Install required packages with:
+## Python Setup
+From the command line:
 
 ```bash
 python3 -m venv venv
 . venv/bin/activate
 pip install -r requirements.txt
 ```
+## Julia Setup
+
+```julia
+julia> using Pkg;
+julia> Pkg.add("DifferentialEquations")
+```
+
+TODO(yberman) What other requirents are there to run Josh's 
 
 ## Approximating exponential function
 
