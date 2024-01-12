@@ -5,8 +5,6 @@
 #    Science 275.5298 (1997): 389-391.
 #
 # All rates are per two weeks.
-
-
 birth_rate = 6.598
 cannibalism_of_eggs_by_larva_rate = 1.209e-2
 cannibalism_of_eggs_by_adult_rate = 1.155e-2
@@ -26,5 +24,6 @@ mu_a = adult_mortality_rate
 initial_larva_population = 250
 initial_pupa_population = 5
 initial_adult_population = 100
+initial_populations = (initial_larva_population, initial_pupa_population, initial_adult_population)
 
 # TODO: Add constants from footnote on covariance estimates of control/maninpulated
