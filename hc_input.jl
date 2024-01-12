@@ -19,9 +19,8 @@ f = System([
     a_3 - 225.441006888361,
     a_2 - 224.351683760664,
 ])
-result = solve(f)
+result = HomotopyContinuation.solve(f)
 
 open("julia_output.txt", "w") do io
 	println(io, real_solutions(result))
 end
-

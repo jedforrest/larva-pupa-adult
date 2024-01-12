@@ -5,12 +5,6 @@ using TaylorSeries
 using LinearAlgebra
 using RowEchelon: rref_with_pivots
 
-# order of taylor series expansion
-# order = 1
-# exp taylor approximation with rational coefficients
-# exp_taylor = convert(Taylor1{Rational{Int}}, taylor_expand(exp, 0; order))
-exp_taylor = taylor_expand(exp, 0; order=2)
-
 function LPA_taylor(du, u, p, t; order=order)
     b, cel, cea, cpa, μl, μa = p
     L, P, A = u
@@ -35,41 +29,38 @@ function prolongate_LPA(LPA_model, vars, params; nsteps=1, order=1)
     return prolongations
 end
 
-
 function create_homotopy_system(eqns, params, data_map)
     eqns_eval = HomotopyContinuation.evaluate(eqns, data_map)
     F = System(eqns_eval; variables=params)
-
-    # use jacobian to find full rank sub matrix
     J = jacobian(F)
-    J_subm = find_submatrix(J, params)
 
-    System([J_subm...])
-end
-
-function find_submatrix(J, params)
-    # random large integer heuristic approach
-    large_ints = rand(DiscreteUniform(10^2, 10^3), 6)
+    # random large integer heuristic to find full rank sub matrix of Jacobian
+    large_ints = rand(DiscreteUniform(10^3, 10^4), 6)
     J2 = HomotopyContinuation.evaluate(J, params => large_ints)
+    # pivots are a set of independent columns
+    _, pivots = rref_with_pivots(J2')
 
-    a, pivots = rref_with_pivots(J2')
-    J[pivots, :]
+    System(eqns_eval[pivots]; variables=params)
 end
 
 # Simulation script
-nsteps = 5
+nsteps = 3
 vars = @var L[0:nsteps] P[0:nsteps] A[0:nsteps]
 params = @var b cel cea cpa μl μa
-eqns = prolongate_LPA(LPA_taylor, vars, params; nsteps, order=5)
+eqns = prolongate_LPA(LPA_taylor, vars, params; nsteps, order=1)
 
 # generated in other file
 include("LPA_simulations.jl")
 data = round.(Int, LPAdata[:,1:nsteps+1])
 
+# create and solve system
+# can't always find full rank matrix using heuristic
 F = create_homotopy_system(eqns,
     [b, cel, cea, cpa, μl, μa],
     [L; P; A] => [data...]
 )
 
-# Unable to get solutions from this
-HomotopyContinuation.solve(F)
+results = HomotopyContinuation.solve(F)
+res = solutions(results)
+
+sampled_params
