@@ -22,13 +22,14 @@ python3 -m venv venv
 pip install -r requirements.txt
 ```
 ## Julia Setup
-To install all dependencies enter the Pkg REPL from a Julia terminal and run:
-```julia-repl
-julia>]
-(larva-pupa-adult) pkg> instantiate
-```
-This installs all missing packages from `Project.toml`. Alternatively, from within Julia run:
+
+To install all dependencies from a Julia terminal run:
 ```julia-repl
 julia> using Pkg
 julia> Pkg.instantiate()
 ```
+This installs all missing packages from `Project.toml`. Alternatively, from the Pkg REPL run:
+```julia-repl
+(larva-pupa-adult) pkg> instantiate
+```
+

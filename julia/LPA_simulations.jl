@@ -4,6 +4,9 @@
 using OrdinaryDiffEq
 using Random, Distributions
 
+include("parameters.jl")
+include("LPA_homotopy_solve.jl")
+
 # Original LPA model (exp version)
 function LPA(du, u, p, t)
     b, cel, cea, cpa, μl, μa = p
@@ -14,37 +17,32 @@ function LPA(du, u, p, t)
     du[3] = P * exp(-cpa * A) + (1 - μa) * A
 end
 
-function generate_synthetic_data(model, u0, params; steps=10)
+function run_simulation(model, u0, params; steps=10)
     prob = DiscreteProblem(model, u0, (0., steps), params)
     sol = OrdinaryDiffEq.solve(prob, FunctionMap())
-    sol[:,:]
 end
 
-# solving the original problem with provided parameters
-# L0, P0, A0
-u0 = [250., 5., 100.]
-# b, cel, cea, cpa, μl, μa
-params = [6.598, 1.209e-2, 1.155e-2, 4.7e-3, 0.2055, 7.629e-3]
+# simulation settings
+steps = 10
+prolongs = 3
+te_order = 2
 
 # Generates a matrix of values for LPA at t = 0, 1, ..., N
-N = 40
-LPAdata = generate_synthetic_data(LPA, u0, params; steps=N)
-LPAdata[:,1] # L0, P0, A0
-LPAdata[:,2] # L1, P1, A1
-LPAdata[:,3] # L2, P2, A2
-LPAdata[:,4] # L3, P3, A3
+original_u0, original_params
+LPA_sol = run_simulation(LPA, original_u0, original_params; steps)
+LPAdata = LPA_sol[:,1:prolongs+1]
 
+# Homotopy Solver
+eqns = prolongate_LPA(LPA_taylor; nsteps=3, order=te_order)
+data = LPAdata[:,1:nsteps+1]
 
-# sample new parameters and ICs
-# parameter p is sampled from a range [p ± tol%]
-sample_parameter(p; tol) = rand(Uniform(p*(1-tol), p*(1+tol)))
-sampled_params = sample_parameter.(params; tol=0.3)
+# create and solve homotopy system
+# can't always find full rank matrix using heuristic
+data_map = vcat(HC_vars...) => [data...]
+F = create_homotopy_system(eqns,
+    [b, cel, cea, cpa, μl, μa],
+    data_map
+)
 
-# sample ICs (u0) from a fixed integer distribution
-sample_ICs(lb, ub) = Float64.(rand(DiscreteUniform(lb, ub)))
-sampled_u0 = [sample_ICs(225, 275), sample_ICs(0, 10), sample_ICs(80, 120)]
-
-# Generates a matrix of values for LPA at t = 0, 1, ..., N
-N = 40
-LPAdata = generate_synthetic_data(LPA, sampled_u0, sampled_params; steps=N)
-LPAdata[:,1:4]
+results = HomotopyContinuation.solve(F)
+pred_params = real(solutions(results))[1]

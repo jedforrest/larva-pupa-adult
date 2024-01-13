@@ -5,6 +5,10 @@ using TaylorSeries
 using LinearAlgebra
 using RowEchelon: rref_with_pivots
 
+# HC symbolic variables and parameters
+HC_vars = @var L[0:nsteps] P[0:nsteps] A[0:nsteps]
+HC_params = @var b cel cea cpa μl μa
+
 function LPA_taylor(du, u, p, t; order=order)
     b, cel, cea, cpa, μl, μa = p
     L, P, A = u
@@ -17,9 +21,10 @@ function LPA_taylor(du, u, p, t; order=order)
     return du
 end
 
-function prolongate_LPA(LPA_model, vars, params; nsteps=1, order=1)
+# function prolongate_LPA(LPA_model, vars, params; nsteps=1, order=1)
+function prolongate_LPA(LPA_model, vars, params; nsteps=3, order=1)
     du = zeros(Expression, 3)
-    u = collect(zip(L, P, A))
+    u = collect(zip(vars...))
     prolongations = Expression[]
 
     for i in 1:nsteps
@@ -42,25 +47,3 @@ function create_homotopy_system(eqns, params, data_map)
 
     System(eqns_eval[pivots]; variables=params)
 end
-
-# Simulation script
-nsteps = 3
-vars = @var L[0:nsteps] P[0:nsteps] A[0:nsteps]
-params = @var b cel cea cpa μl μa
-eqns = prolongate_LPA(LPA_taylor, vars, params; nsteps, order=1)
-
-# generated in other file
-include("LPA_simulations.jl")
-data = round.(Int, LPAdata[:,1:nsteps+1])
-
-# create and solve system
-# can't always find full rank matrix using heuristic
-F = create_homotopy_system(eqns,
-    [b, cel, cea, cpa, μl, μa],
-    [L; P; A] => [data...]
-)
-
-results = HomotopyContinuation.solve(F)
-res = solutions(results)
-
-sampled_params
