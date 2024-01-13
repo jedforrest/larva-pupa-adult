@@ -22,14 +22,13 @@ python3 -m venv venv
 pip install -r requirements.txt
 ```
 ## Julia Setup
-
-```julia
-julia> using Pkg;
-julia> Pkg.add("DifferentialEquations")
+To install all dependencies enter the Pkg REPL from a Julia terminal and run:
+```julia-repl
+julia>]
+(larva-pupa-adult) pkg> instantiate
 ```
-
-TODO(yberman) What other requirents are there to run Josh's 
-
-## Julia Setup
-
-TODO(yberman)
+This installs all missing packages from `Project.toml`. Alternatively, from within Julia run:
+```julia-repl
+julia> using Pkg
+julia> Pkg.instantiate()
+```
