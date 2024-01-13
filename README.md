@@ -13,12 +13,22 @@ This repository documents this work.
 * [homotopy_continuation.py](/homotopy_continuation.py) -- call HC.jl see Julia setup below
 * [dynamic_taylor.py](/dynamic_taylor.py) -- run dynamic taylor algorithm
 
-## Python Setup:
+## Python Setup
+From the command line:
 
-This work is being done in Python. Install required packages with:
-
-`pip install -r requirements.txt`
-
+```bash
+python3 -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+```
 ## Julia Setup
-
-TODO(yberman)
+To install all dependencies enter the Pkg REPL from a Julia terminal and run:
+```julia-repl
+julia>]
+(larva-pupa-adult) pkg> instantiate
+```
+This installs all missing packages from `Project.toml`. Alternatively, from within Julia run:
+```julia-repl
+julia> using Pkg
+julia> Pkg.instantiate()
+```
