@@ -9,27 +9,27 @@ using RowEchelon: rref_with_pivots
 HC_vars = @var L[0:nsteps] P[0:nsteps] A[0:nsteps]
 HC_params = @var b cel cea cpa μl μa
 
-function LPA_taylor(du, u, p, t; order=order)
-    b, cel, cea, cpa, μl, μa = p
-    L, P, A = u
+function LPA_taylor!(out, unp1, un, p; exp_func=exp)
+    b, cel, cea, cpa, μl, μa = p # parameters
+    L1, P1, A1 = unp1 # u_n+1
+    L, P, A = un # u_n
 
-    exp_taylor = taylor_expand(exp, 0; order)
-
-    du[1] = b * A * exp_taylor(-cel * L - cea * A)
-    du[2] = (1 - μl) * L
-    du[3] = P * exp_taylor(-cpa * A) + (1 - μa) * A
-    return du
+    out[1] = -L1 + b * A * exp_func(-cel * L - cea * A)
+    out[2] = -P1 + (1 - μl) * L
+    out[3] = -A1 + P * exp_func(-cpa * A) + (1 - μa) * A
+    return nothing
 end
 
-# function prolongate_LPA(LPA_model, vars, params; nsteps=1, order=1)
-function prolongate_LPA(LPA_model, vars, params; nsteps=3, order=1)
-    du = zeros(Expression, 3)
+function prolongate_LPA(vars, params; nsteps=3, order=2)
+    out = zeros(Expression, 3)
     u = collect(zip(vars...))
     prolongations = Expression[]
 
+    exp_taylor = convert(Taylor1{Rational{Int}}, taylor_expand(exp, 0; order))
+
     for i in 1:nsteps
-        du = LPA_model(du, u[i], params, i; order) .- u[i+1]
-        append!(prolongations, du)
+        LPA_taylor!(out, u[i+1], u[i], params; exp_func=exp_taylor)
+        append!(prolongations, out)
     end
     return prolongations
 end

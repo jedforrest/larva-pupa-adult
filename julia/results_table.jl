@@ -8,7 +8,7 @@ include("LPA_simulations.jl")
 original_params
 pred_params
 
-# resimulate with predicted parameters
+# simulate with predicted parameters
 # compare with original simulation
 steps = 20
 u0 = original_u0
