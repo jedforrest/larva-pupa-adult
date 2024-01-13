@@ -24,5 +24,6 @@ mu_a = adult_mortality_rate
 initial_larva_population = 250
 initial_pupa_population = 5
 initial_adult_population = 100
+initial_populations = (initial_larva_population, initial_pupa_population, initial_adult_population)
 
 # TODO: Add constants from footnote on covariance estimates of control/maninpulated
