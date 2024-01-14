@@ -28,7 +28,7 @@ end
 # simulation settings
 steps = 10
 prolongs = 3
-te_order = 2#k # from parameters.jl
+te_order = 1#k # from parameters.jl
 
 # Generates a matrix of values for LPA at t = 0, 1, ..., N
 original_u0, original_params
@@ -46,41 +46,63 @@ data_map = vcat(HC_vars...) => [data...]
 
 eqns_eval = HomotopyContinuation.evaluate(eqns, data_map)
 
+#----------------------------------------------
 F = System(eqns_eval; variables=[HC_params...])
 J = jacobian(F)
-to_number.(J)
+j1 = J[1,1]
 
-R, params = polynomial_ring(QQ, ["b", "cel", "cea", "cpa", "μl", "μa"])
+function expression_to_polyn_ring()
 
-B = QQ[
-    1 2
-    3 4
-]
+end
+
+j1
+variables(j1)
+HomotopyContinuation.coefficients(j1, variables(j1))
+
+p = ["b", "cel", "cea", "cpa", "μl", "μa"]
+R, params_qq = polynomial_ring(QQ, p.*"_qq")
+b_qq, cel_qq, cea_qq, cpa_qq, μl_qq, μa_qq = params_qq
+
+string.(J)
+replacements = p .=> params_qq
+Jstr = replace.(string.(J), replacements...)
+# Jr = replace(string(J), replacements...)
+Jpar = Meta.parse.(Jstr)
+typeof.(Jpar)
+Jeval = eval.(Jpar)
+typeof.(Jeval)
+Jeval[1]
+rank(Jeval)
+
+Jstr = string(J)
+Jstr = replace(Jstr, "Expression" => "R")
+ex = Meta.parse(Jstr)
+Jeval = eval(ex)
+typeof(Jeval)
+Jeval[1,1]
+Jeval[1,1] |> typeof
+
+rank(Jeval)
+J2 = transpose(Jeval)
+r, A, d = rref_rational(J2)
+r
+A
+Ad = A/d
+is_rref(Ad)
+
+Ad[:,1]
+
+Ad
+J2
 
 # TODO
-# Convert J expr to MatSpace by replacing variables with QQ
-# Then caclulate rank with rref_rational
+# determine columns in Ad which are pivots
+# then select columns from F
+# try to solve F in AA with solve_rational
+# if not, return to HC to solve
 
-typeof(B)
-eltype(B)
-RB=R.(B)
-rref_rational(RB)
-rref_rational(B)
 
-qq_cea = params[3]
-HomotopyContinuation.evaluate(J, cea => qq_cea)
-HomotopyContinuation.coefficients(J[1], cea)
-QQ.(J)
-
-M, c = exponents_coefficients(J[1], [HC_params...])
-M
-c
-
-# random large integer heuristic to find full rank sub matrix of Jacobian
-large_ints = rand(DiscreteUniform(10^3, 10^4), 6)
-J2 = HomotopyContinuation.evaluate(J, params => large_ints)
-# pivots are a set of independent columns
-_, pivots = rref_with_pivots(J2')
+#----------------------------------------------
 
 F = create_homotopy_system(eqns,
     [HC_params...],
