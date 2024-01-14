@@ -3,64 +3,53 @@
 using HomotopyContinuation
 using TaylorSeries
 using LinearAlgebra
-using RowEchelon: rref_with_pivots
+# using AbstractAlgebra
 
-function LPA_taylor(du, u, p, t; order=order)
-    b, cel, cea, cpa, μl, μa = p
-    L, P, A = u
-
-    exp_taylor = taylor_expand(exp, 0; order)
-
-    du[1] = b * A * exp_taylor(-cel * L - cea * A)
-    du[2] = (1 - μl) * L
-    du[3] = P * exp_taylor(-cpa * A) + (1 - μa) * A
-    return du
-end
-
-function prolongate_LPA(LPA_model, vars, params; nsteps=1, order=1)
-    du = zeros(Expression, 3)
-    u = collect(zip(L, P, A))
-    prolongations = Expression[]
-
-    for i in 1:nsteps
-        du = LPA_model(du, u[i], params, i; order) .- u[i+1]
-        append!(prolongations, du)
-    end
-    return prolongations
-end
-
-function create_homotopy_system(eqns, params, data_map)
-    eqns_eval = HomotopyContinuation.evaluate(eqns, data_map)
-    F = System(eqns_eval; variables=params)
+#----------------------------------------------
+function full_rank_subsystem(F::System)
+    sys_vars = variables(F)
+    R, ring_vars = polynomial_ring(QQ, string.(sys_vars).*"_qq")
     J = jacobian(F)
+    m, n = size(J)
 
-    # random large integer heuristic to find full rank sub matrix of Jacobian
-    large_ints = rand(DiscreteUniform(10^3, 10^4), 6)
-    J2 = HomotopyContinuation.evaluate(J, params => large_ints)
-    # pivots are a set of independent columns
-    _, pivots = rref_with_pivots(J2')
+    # Convert Expression to PolynomialRing so that we can use rref and determine pivots
+    J_r = matrix(R, [expr_to_ring(J[i,j], sys_vars, ring_vars) for i in 1:m, j in 1:n])
 
-    System(eqns_eval[pivots]; variables=params)
+    # reduced row echelon form
+    J_r = m > n ? transpose(J_r) : J_r
+    _, A, d = rref_rational(J_r)
+    pivot_cols = pivot_columns(A, d)
+
+    # new subsystem
+    System(expressions(F)[pivot_cols])
 end
 
-# Simulation script
-nsteps = 3
-vars = @var L[0:nsteps] P[0:nsteps] A[0:nsteps]
-params = @var b cel cea cpa μl μa
-eqns = prolongate_LPA(LPA_taylor, vars, params; nsteps, order=1)
+function expr_to_ring(expr, sys_vars, ring_vars)
+    if iszero(expr)
+        return 0
+    else
+        expons, coeffs = exponents_coefficients(expr, sys_vars)
+        return create_polyn(ring_vars, expons, coeffs)
+    end
+end
 
-# generated in other file
-include("LPA_simulations.jl")
-data = round.(Int, LPAdata[:,1:nsteps+1])
+function create_polyn(vars, expons, coeffs)
+    # should work regardless of type of 'vars'
+    sum(coeff * prod(vars .^ col) for (col, coeff) in zip(eachcol(expons), coeffs))
+end
 
-# create and solve system
-# can't always find full rank matrix using heuristic
-F = create_homotopy_system(eqns,
-    [b, cel, cea, cpa, μl, μa],
-    [L; P; A] => [data...]
-)
-
-results = HomotopyContinuation.solve(F)
-res = solutions(results)
-
-sampled_params
+function pivot_columns(A, d)
+    # pivot column if A[i,i]=1 and A[j,i] = 0, i!=j
+    is_rref(A) || error("Matrix must be in reduced row echelon form")
+    _A = Matrix(A) # must be a Julia Matrix type
+    m, n = size(_A)
+    dIm = d.*collect(I(m)) # Identity matrix * denominator
+    pivot_cols = []
+    for i in 1:n
+        if _A[:,i] in eachcol(dIm)
+            push!(pivot_cols, i)
+        end
+    end
+    return pivot_cols
+end
+#----------------------------------------------
