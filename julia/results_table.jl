@@ -2,16 +2,11 @@
 # for now I'm running LPA_simulations.jl interactively
 using Plots
 
-include("parameters.jl")
-include("LPA_simulations.jl")
-
 param_names = string.(HC_params)
 
 # from other files
 original_params
 pred_params
-
-
 
 original_params .- pred_params
 
