@@ -5,8 +5,15 @@ using Plots
 include("parameters.jl")
 include("LPA_simulations.jl")
 
+param_names = string.(HC_params)
+
+# from other files
 original_params
 pred_params
+
+
+
+original_params .- pred_params
 
 # simulate with predicted parameters
 # compare with original simulation
@@ -15,6 +22,4 @@ u0 = original_u0
 lpa_sol_original = run_simulation(LPA, u0, original_params; steps)
 lpa_sol_pred = run_simulation(LPA, u0, pred_params; steps)
 
-plot(plot(lpa_sol_original), plot(lpa_sol_pred);
-    layout=(:,1)
-)
+plot(plot(lpa_sol_original), plot(lpa_sol_pred); layout=(:,1))
