@@ -30,24 +30,9 @@ function LPA_taylor!(out, unp1, un, p; exp_func=exp)
     return nothing
 end
 
-#----------------------------------------------
 function run_simulation(model, u0, params; steps=10)
     prob = DiscreteProblem(model, u0, (0., steps), params)
     sol = OrdinaryDiffEq.solve(prob, FunctionMap())
-end
-
-function prolongate_LPA(vars, params; nsteps=3, order=2)
-    out = zeros(Expression, 3)
-    u = collect(zip(vars...))
-    prolongations = Expression[]
-
-    exp_taylor = convert(Taylor1{Rational{Int}}, taylor_expand(exp, 0; order))
-
-    for i in 1:nsteps
-        LPA_taylor!(out, u[i+1], u[i], params; exp_func=exp_taylor)
-        append!(prolongations, out)
-    end
-    return prolongations
 end
 
 #----------------------------------------------
