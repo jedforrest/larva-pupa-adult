@@ -3,9 +3,25 @@
 using HomotopyContinuation
 using TaylorSeries
 using LinearAlgebra
-# using AbstractAlgebra
+
+function prolongate_LPA(vars, params; nsteps=3, order=2)
+    out = zeros(Expression, 3)
+    u = collect(zip(vars...))
+    prolongations = Expression[]
+
+    exp_taylor = convert(Taylor1{Rational{Int}}, taylor_expand(exp, 0; order))
+
+    for i in 1:nsteps
+        LPA_taylor!(out, u[i+1], u[i], params; exp_func=exp_taylor)
+        append!(prolongations, out)
+    end
+    return prolongations
+end
 
 #----------------------------------------------
+# Not currently used
+# using AbstractAlgebra
+
 function full_rank_subsystem(F::System)
     sys_vars = variables(F)
     R, ring_vars = polynomial_ring(QQ, string.(sys_vars).*"_qq")
