@@ -9,7 +9,6 @@ using LinearAlgebra
 using DataFrames, CSV
 
 include("LPA_models.jl")
-include("LPA_homotopy_solve.jl")
 
 #----------------------------------------------
 # simulation settings
@@ -29,7 +28,7 @@ HC_params = @var b cel cea cpa μl μa
 # results file headings
 df = DataFrame([
     "param_set" => Int[],
-    "taylor_degree" => Int[],
+    "n_taylor" => Int[],
     "true_parameters" => Vector{Float64}[],
     "pred_parameters" => Vector{Float64}[],
 ])
@@ -39,7 +38,7 @@ df = DataFrame([
 sampled_params = [[rand(Uniform(0.75p, 1.25p)) for p in original_params] for i in 1:Nsims];
 
 for i in 1:Nsims
-    print("Simulation $i/$Nsims\nTaylor degree:")
+    print("Simulation $i/$Nsims\nTaylor(n):")
 
     # generates a matrix of values for LPA at t = 0, 1, ..., N
     true_params = sampled_params[i]
@@ -47,7 +46,7 @@ for i in 1:Nsims
     data_map = vcat((HC_vars[i] .=> sol[i,:] for i in eachindex(HC_vars))...)
 
     for n in 1:Ntaylor
-        print("\t$n")
+        print(" $n")
         # prolongate with taylor approximation order n
         eqns = prolongate_LPA(HC_vars, HC_params; nsteps=steps, order=n)
 
@@ -70,7 +69,5 @@ for i in 1:Nsims
     println("\n")
 end
 
-df
-
 # write results to CSV file
-CSV.write("simulation_results.csv", df)
+CSV.write("tables/simulation_results.csv", df)

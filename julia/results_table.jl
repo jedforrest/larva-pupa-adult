@@ -1,20 +1,24 @@
 # eventually read from a file
 # for now I'm running LPA_simulations.jl interactively
-using Plots
+using DataFrames, CSV, Chain
 
-param_names = string.(HC_params)
+param_names = [:b :cel :cea :cpa :μl :μa]
+paramtuple(x) = NamedTuple{Tuple(param_names)}(Tuple(x))
 
-# from other files
-original_params
-pred_params
+function load_data(filename)
+    df = DataFrame(CSV.File(filename))
+    evalparse(str::String) = eval(Meta.parse(str))
+    select(df, :n_taylor,
+        [:true_parameters, :pred_parameters] .=> ByRow(evalparse) .=> [:true_p, :pred_p])
+end
 
-original_params .- pred_params
+#------------------------------------------------------------
+df = load_data("tables/simulation_results.csv")
 
-# simulate with predicted parameters
-# compare with original simulation
-steps = 20
-u0 = original_u0
-lpa_sol_original = run_simulation(LPA, u0, original_params; steps)
-lpa_sol_pred = run_simulation(LPA, u0, pred_params; steps)
+df_RMSE = @chain df begin
+    select(:n_taylor, [:true_p, :pred_p] => ByRow((x,y) -> paramtuple((x-y).^2)) => AsTable)
+    groupby(:n_taylor)
+    combine(Not(:n_taylor) .=> sqrt∘mean => x -> x*"_RMSE")
+end
 
-plot(plot(lpa_sol_original), plot(lpa_sol_pred); layout=(:,1))
+CSV.write("tables/error_table.csv", df_RMSE)
