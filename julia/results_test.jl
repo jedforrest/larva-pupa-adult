@@ -7,6 +7,8 @@ include("LPA_models.jl")
 # results_table.jl
 df = load_data("tables/simulation_results.csv")
 
+subset(df, )
+
 idx = 90
 true_params = df.true_p[idx]
 pred_params = df.pred_p[idx]

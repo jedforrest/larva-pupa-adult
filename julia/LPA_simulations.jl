@@ -9,8 +9,6 @@ using LinearAlgebra
 using DataFrames, CSV
 
 include("LPA_models.jl")
-include("LPA_homotopy_solve.jl")
-
 #----------------------------------------------
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
@@ -19,8 +17,8 @@ original_params = [6.598, 1.209e-2, 1.155e-2, 4.7e-3, 0.2055, 7.629e-3]
 
 # simulation settings
 steps = 3 # simulation steps aka prolongs
-Ntaylor = 15 # max taylor approx.
-Nsims = 100 # sims per parameter set
+Ntaylor = 7 # max taylor approx.
+Nsims = 10 # sims per parameter set
 
 # HC symbolic variables and parameters
 HC_vars = @var L[0:steps] P[0:steps] A[0:steps]
@@ -54,7 +52,7 @@ allowmissing!(df, :pred_parameters)
     # Solve the system in the Complex domain to find maximum number of solutions
     # Use these solutions to find the Real solutions we want according to our data
     # Our 'parameters' are the data from the simulation
-    p0 = 100 .* rand(ComplexF64, length(data))
+    p0 = 100 .* rand(ComplexF64,  nparameters(F))
     result_p0 = HomotopyContinuation.solve(F, target_parameters = p0)
 
     for i in 1:Nsims
@@ -83,4 +81,4 @@ allowmissing!(df, :pred_parameters)
 end
 
 # write results to CSV file
-CSV.write("tables/simulation_results.csv", df)
+CSV.write("tables/simulation_results_centering.csv", df)
