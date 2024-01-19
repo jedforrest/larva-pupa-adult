@@ -50,55 +50,37 @@ end
 
 # Taylor series approximated LPA model with centering at each step
 # Centering is determined by user inputed intervals (need not be exact)
-function LPA_taylor_centred!(out, unp1, un, p; exp_func=exp)
+function LPA_taylor_centred!(out, unp1, un, p; centres, order)
     b, cel, cea, cpa, μl, μa = p # parameters
     L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
+    # centres are 'initial guesses' for parameters within some interval
+    l_centre = substitute(-cel * L - cea * A, p .=> centres)
+    a_centre = substitute(-cpa * A, p .=> centres)
 
+    # exp_shift(-cel * L - cea * A, l_centre; order)
+    # exp_shift(-cpa * A, a_centre; order)
 
-    exp_func = exp_approximation(ui, centres, order)
-
-
-
-    out[1] = -L1 + b * A * exp_func(-cel * L - cea * A)
+    out[1] = -L1 + b * A * exp_shift(-cel * L - cea * A, l_centre; order)
     out[2] = -P1 + (1 - μl) * L
-    out[3] = -A1 + P * exp_func(-cpa * A) + (1 - μa) * A
+    out[3] = -A1 + P * exp_shift(-cpa * A, a_centre; order) + (1 - μa) * A
     return nothing
 end
 
+exp_shift(x, c; order) = taylor_expand(exp, c; order)(x-c)
+
 #----------------------------------------------
-
-centres = map(p_i -> (p_i.ub - p_i.lb)/2, param_intervals)
-
-param_intervals
-
-function exp_approximation(eqn, un, c, order)
-    # taylor polynomial (order n) for exp centered at c
-
-
-    taylor_expand(exp, 0; order)
-end
-
-u = collect(zip(HC_vars...))
-u[1]
-
-b, cel, cea, cpa, μl, μa = HC_params # parameters
-L, P, A = u[1] # u_n
-
-eqn = -cel * L - cea * A
-
-
 function prolongate_LPA(vars, params, param_intervals; nsteps=3, order=2)
-    out = zeros(Expression, 3)
     u = collect(zip(vars...))
-    prolongations = Expression[]
+    out = zeros(Num, 3)
+    prolongations = Num[]
 
-    exp_taylor = convert(Taylor1{Rational{Int}}, taylor_expand(exp, 0; order))
-    # exp_taylor = convert(Taylor1{Float64}, taylor_expand(exp, 0; order))
+    # halfway between upper and lower bounds of intervals
+    centres = map(p_i -> (p_i.ub - p_i.lb)/2, param_intervals)
 
-    for i in 1:nsteps
-        LPA_taylor!(out, u[i+1], u[i], params; exp_func=exp_taylor)
+    for i in 0:nsteps-1
+        LPA_taylor_centred!(out, u[i+1], u[i], params; centres, order)
         append!(prolongations, out)
     end
     return prolongations
