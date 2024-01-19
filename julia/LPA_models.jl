@@ -37,14 +37,14 @@ function LPA!(du, u, p, t)
 end
 
 # Taylor series approximated LPA model
-function LPA_taylor!(out, unp1, un, p; exp_func=exp)
+function LPA_taylor!(unp1, un, p; exp_func=exp)
     b, cel, cea, cpa, μl, μa = p # parameters
-    L1, P1, A1 = unp1 # u_n+1
+    # L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
-    out[1] = -L1 + b * A * exp_func(-cel * L - cea * A)
-    out[2] = -P1 + (1 - μl) * L
-    out[3] = -A1 + P * exp_func(-cpa * A) + (1 - μa) * A
+    unp1[1] = b * A * exp_func(-cel * L - cea * A)
+    unp1[2] = (1 - μl) * L
+    unp1[3] = P * exp_func(-cpa * A) + (1 - μa) * A
     return nothing
 end
 
@@ -86,11 +86,23 @@ function prolongate_LPA(vars, params, param_intervals; nsteps=3, order=2)
     return prolongations
 end
 
-
+function convert_to_HC_expression(eqn)
+    eqn_vars = Symbolics.get_variables(eqn)
+    hc_vars = HomotopyContinuation.Variable.(Symbolics.tosymbol.(eqn_vars))
+    sub = substitute(eqn, Dict(eqn_vars .=> hc_vars))
+end
 
 function run_simulation(model, u0, params; steps=10)
     prob = DiscreteProblem(model, u0, (0., steps), params)
     sol = OrdinaryDiffEq.solve(prob, FunctionMap())
+end
+
+function verify_solution(eqns, sym_vars, data, sym_params, sol_params)
+    # verify that the parameters found are a solution to the equations + data
+    # exact solution would return all zeros
+    res = substitute(eqns, Dict(sym_vars .=> data))
+    res = substitute(res, Dict(sym_params .=> sol_params))
+    return res
 end
 
 #----------------------------------------------

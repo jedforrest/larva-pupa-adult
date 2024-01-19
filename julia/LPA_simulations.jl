@@ -9,6 +9,8 @@ using LinearAlgebra
 using DataFrames, CSV
 
 include("LPA_models.jl")
+include("taylorseries_patch.jl")
+
 #----------------------------------------------
 # L0, P0, A0
 original_u0 = [250., 5., 100.]

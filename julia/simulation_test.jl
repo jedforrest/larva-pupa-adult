@@ -11,12 +11,10 @@ using Symbolics
 
 include("LPA_models.jl")
 include("taylorseries_patch.jl")
-# include("LPA_homotopy_solve.jl")
 
 #----------------------------------------------
 # simulation settings
 steps = 3 # simulation steps aka prolongs
-
 
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
@@ -48,62 +46,66 @@ i = 1
 n = 1
 
 # prolongate with taylor approximation order n
-param_intervals = fill(RealInterval(0, 1), 6)
+p_interval(x) = RealInterval(0, round(10. ^ ceil(log10(x)), sigdigits=1))
+param_intervals = p_interval.(original_params)
 eqns = prolongate_LPA(Sym_vars, Sym_params, param_intervals; nsteps=steps, order=n)
-eqns[1]
 
+data
 
-exp_a = taylor_expand(exp, 0; order=n)
-exp_a(adult_eqn)
+subs = substitute(eqns, Dict(Sym_params .=> true_params))
 
-exp_a = taylor_expand(exp, substitute(adult_eqn, Sym_params .=> centres); order=n)
-exp_a(adult_eqn)
+eqns_subs = substitute(eqns, Dict([L..., P..., A...] .=> data))
+
+hc_eqns = convert_to_HC_expression.(eqns_subs)
+
+# I shouldn't be getting negative numbers in my solution
+# this wasn't happening before
+# something wrong in the shift algorithm
+
+F = System(hc_eqns)
+
+pivots = [1,2,3,4,6,7]
+F = System(hc_eqns[pivots])
+
+p0 = 100 .* rand(Float64, 12)
+# result_p0 = HomotopyContinuation.solve(F, target_parameters = p0)
+result_p0 = HomotopyContinuation.solve(F)
+res = real_solutions(result_p0)[1]
+
+verify_solution(eqns, sym_vars, data, Sym_params, res)
 
 # generate a matrix of values for LPA at t = 0, 1, ..., N
 true_params = sampled_params
 LPA_sol = run_simulation(LPA!, original_u0, true_params; steps)
 data = vcat(LPA_sol[:,:]'...)
 
-# determine rank of jacobian
-data_map = Dict([L..., P..., A...] .=> data)
-eqn_subs = substitute(eqns, data_map)
-# J = Symbolics.jacobian(eqn_subs, Sym_params)
-# rank(J)
+# # determine rank of jacobian
+# data_map = Dict([L..., P..., A...] .=> data)
+# eqn_subs = substitute(eqns, data_map)
+# # J = Symbolics.jacobian(eqn_subs, Sym_params)
+# # rank(J)
 
-eqns
+F = System(hc_eqns[pivots])
+HomotopyContinuation.solve(F)
 
-
-p0 = rand(DiscreteUniform(0,10), 12)
-
-eqns_subs = substitute(eqns, Dict([L..., P..., A...] .=> p0))
-eqns_expand = Symbolics.expand.(eqn_subs)
-
-eqn1 = eqns_subs[1]
-eqn_vars = Symbolics.get_variables(eqn1)
-
-function convert_to_HC_expression(eqn)
-    eqn_vars = Symbolics.get_variables(eqn)
-    eqn_syms = Symbolics.tosymbol.(eqn_vars)
-
-    hc_vars = HomotopyContinuation.Variable.(eqn_syms)
-    var_map = Dict(eqn_vars .=> hc_vars)
-    sub = substitute(eqn, var_map)
-end
-eqn_1 = convert_to_HC_expression(eqn1)
-typeof(eqn_1)
-
-hc_eqns = convert_to_HC_expression.(eqn_expand)
-
-F = System(hc_eqns)
-
-
+res = HomotopyContinuation.solve(
+    F,
+    solutions(result_p0);
+    start_parameters = p0,
+    target_parameters = data,
+    transform_result = (r,p) -> real_solutions(r),
+    flatten = true
+)
 
 pivots = [1,2,3,4,6,7]
 F = System(eqns[pivots]; variables=[Sym_params...], parameters=[L..., P..., A...])
 
 p0 = 100 .* rand(ComplexF64, 12)
+
+
 result_p0 = HomotopyContinuation.solve(F, target_parameters = p0)
 
+verify_solution(eqns, sym_vars, data, Sym_params, true_params)
 
 
 # Solve HC system with data from simulation
