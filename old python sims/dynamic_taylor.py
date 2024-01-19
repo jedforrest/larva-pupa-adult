@@ -79,12 +79,14 @@ def adult_poly_system_withapprox(degree, adult_pop_series, pupa_pop_series, c_pa
 
 
 ### The default values of off make sense for the default values in lpa_params. We should update this.
-def gensys(prolog, degree, off=[0.0001,0.0001,0.0001]):
+def gensys(prolog, degree, offsum=[0,0,0], offmul = [1,1,1]):
         L, P, A = simulate (prolog+1)
-        lpoly = larva_poly_system_withapprox(degree, A, L, lpa_params.c_el+off[0], lpa_params.c_ea+off[1])
+        lpoly = larva_poly_system_withapprox(degree, A, L, offmul[0]*lpa_params.c_el+offsum[0], offmul[1]*lpa_params.c_ea+offsum[1])
 
 
-        print("howoff = {};".format(off))
+        
+        print("howoffsum = {};".format(offsum))
+        print("howoffmul = {};".format(offmul))
         
         truesolLarva = "solL = [{} ; {} ; {}];".format(lpa_params.c_el,lpa_params.c_ea,lpa_params.b)
 
@@ -104,7 +106,7 @@ def gensys(prolog, degree, off=[0.0001,0.0001,0.0001]):
         print(mysys)
             
         
-        apoly = adult_poly_system_withapprox(degree, A, P, lpa_params.c_pa+off[2])
+        apoly = adult_poly_system_withapprox(degree, A, P, offmul[2]*lpa_params.c_pa+offsum[2])
 
         truesolAdult = "solA = [{} ; {}];".format(lpa_params.c_pa,lpa_params.mu_a)
 
