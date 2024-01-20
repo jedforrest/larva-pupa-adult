@@ -9,18 +9,19 @@ function load_data(filename)
     evalparse(str::String) = eval(Meta.parse(str))
     @chain filename begin
         DataFrame(CSV.File(_))
-        dropmissing # no real solutions found for even n
-        transform([:true_parameters, :pred_parameters] .=> ByRow(evalparse) .=> [:true_p, :pred_p])
+        # dropmissing # no real solutions found for even n
+        # subset(:num_real_solutions > 0)
+        transform([:sampled_parameters, :pred_parameters] .=> ByRow(evalparse) .=> [:true_p, :pred_p])
     end
 end
 
 #------------------------------------------------------------
-df = load_data("tables/simulation_results.csv")
+df = load_data("tables/simulation_results_centering.csv")
 
 df_RMSE = @chain df begin
-    select(:taylor_n, [:true_p, :pred_p] => ByRow((x,y) -> paramtuple((x-y).^2)) => AsTable)
-    groupby(:taylor_n)
+    select(:taylor_n, :interval_range, [:true_p, :pred_p] => ByRow((x, y) -> paramtuple((x - y) .^ 2)) => AsTable)
+    groupby([:taylor_n, :interval_range])
     combine(nrow => :count, Not(:taylor_n) .=> sqrt∘mean => x -> x*"_RMSE")
 end
 
-CSV.write("tables/error_table.csv", df_RMSE)
+CSV.write("tables/error_table_centering.csv", df_RMSE)

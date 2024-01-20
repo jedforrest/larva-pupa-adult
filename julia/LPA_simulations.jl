@@ -20,67 +20,82 @@ original_params = [6.598, 1.209e-2, 1.155e-2, 4.7e-3, 0.2055, 7.629e-3]
 # simulation settings
 steps = 3 # simulation steps aka prolongs
 Ntaylor = 7 # max taylor approx.
-Nsims = 10 # sims per parameter set
+Nsims = 20 # sims per parameter set
+interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
+centre_exps = true
 
 # HC symbolic variables and parameters
-HC_vars = @var L[0:steps] P[0:steps] A[0:steps]
-HC_params = @var b cel cea cpa μl μa
+sym_vars = @variables L[0:steps] P[0:steps] A[0:steps]
+sym_params = @variables b cel cea cpa μl μa
+sym_vars_flat = [L..., P..., A...]
 
 # presample all parameter sets
-# parameter p is sampled from a range [p ± 25%]
-sampled_params = [[rand(Uniform(0.75p, 1.25p)) for p in original_params] for i in 1:Nsims];
+# parameter x is sampled from range [x ± p%]
+create_intervals(x, p) = RealInterval((1 - p) * x, (1 + p) * x)
+sample_interval(x_int) = rand(Uniform(x_int.lb, x_int.ub))
 #----------------------------------------------
 # results file headings
 df = DataFrame([
-    "param_set" => Int[],
+    "interval_range" => Float64[],
     "taylor_n" => Int[],
     "num_solutions" => Int[],
     "num_real_solutions" => Int[],
-    "true_parameters" => Vector{Float64}[],
-    "pred_parameters" => Vector{Float64}[],
+    "pred_parameters" => Vector{Number}[],
+    "sampled_parameters" => Vector{Float64}[],
+    "sampled_u0" => Vector{Float64}[],
 ])
-allowmissing!(df, :pred_parameters)
 
-@time for n in 1:Ntaylor
-    print("[Sim $n/$Ntaylor]")
-    # prolongate with taylor approximation order n
-    eqns = prolongate_LPA(HC_vars, HC_params; nsteps=steps, order=n)
+@time for I_range in interval_ranges
+    param_intervals = create_intervals.(original_params, I_range)
+    u0_intervals = create_intervals.(original_u0, I_range)
 
-    # Create homotopy system from equations using known full rank column set
-    pivots = [1,2,3,4,6,7]
-    F = System(eqns[pivots]; variables=[HC_params...], parameters=[L..., P..., A...])
-
-    # Parameter homotopy method
-    # Solve the system in the Complex domain to find maximum number of solutions
-    # Use these solutions to find the Real solutions we want according to our data
-    # Our 'parameters' are the data from the simulation
-    p0 = 100 .* rand(ComplexF64,  nparameters(F))
-    result_p0 = HomotopyContinuation.solve(F, target_parameters = p0)
-
-    for i in 1:Nsims
-        i%10 == 0 && print(" $i")
-
-        # generate a matrix of values for LPA at t = 0, 1, ..., N
-        true_params = sampled_params[i]
-        LPA_sol = run_simulation(LPA!, original_u0, true_params; steps)
-        data = vcat(LPA_sol[:,:]'...)
-
-        # Solve HC system with data from simulation
-        res = HomotopyContinuation.solve(
-            F,
-            solutions(result_p0);
-            start_parameters = p0,
-            target_parameters = data,
-            transform_result = (r,p) -> real_solutions(r),
-            flatten = true
-        )
-        pred_params = nreal(res) > 0 ? real_solutions(res)[1] : missing
-
-        # save results
-        push!(df, (i, n, nsolutions(res), nreal(res), true_params, pred_params))
+    centres = if centre_exps
+        # halfway between upper and lower bounds of parameter intervals
+        map(p_i -> (p_i.ub - p_i.lb) / 2, param_intervals)
+    else
+        # no centering
+        zeros(length(sym_params))
     end
-    println()
+    
+
+    for n in 1:Ntaylor
+        print("[I=$I_range, N=$n]")
+        # prolongate with taylor approximation order n
+        eqns = prolongate_LPA(sym_vars, sym_params, centres; nsteps=steps, order=n)
+
+        for i in 1:Nsims
+            print(" $i")
+
+            # sample new parameters and ICs for given interval
+            sampled_params = sample_interval.(param_intervals)
+            sampled_u0 = sample_interval.(u0_intervals)
+
+            # generate simulated data for LPA at t = 0, 1, ..., N
+            LPA_sol = run_simulation(LPA!, sampled_u0, sampled_params; steps)
+            data = [LPA_sol[1, :]; LPA_sol[2, :]; LPA_sol[3, :]]
+
+            # Create homotopy system from equations using known full rank column set
+            eqns_with_data = substitute(eqns, Dict(sym_vars_flat .=> data))
+            hc_eqns = convert_to_HC_expression.(eqns_with_data)
+            pivots = [1,2,3,4,6,7]
+            F = System(hc_eqns[pivots])
+
+            # Solve HC system and keep real solutions (or first complex)
+            res = HomotopyContinuation.solve(F;
+                show_progress = false,
+                stop_early_cb = r -> is_real(r) # stop once first real solution is found
+            )
+            pred_params = nreal(res) > 0 ? real_solutions(res)[1] : solutions(res)[1]
+
+            # save results
+            push!(df, (I_range, n, nsolutions(res), nreal(res), 
+                pred_params, sampled_params, sampled_u0))
+        end
+        println()
+    end
 end
 
+df
+
 # write results to CSV file
-CSV.write("tables/simulation_results_centering.csv", df)
+CSV.write("tables/simulation_results_no_centre.csv", df)

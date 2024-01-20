@@ -37,14 +37,17 @@ function LPA!(du, u, p, t)
 end
 
 # Taylor series approximated LPA model
-function LPA_taylor!(unp1, un, p; exp_func=exp)
+function LPA_taylor!(out, unp1, un, p; order)
     b, cel, cea, cpa, μl, μa = p # parameters
-    # L1, P1, A1 = unp1 # u_n+1
+    L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
-    unp1[1] = b * A * exp_func(-cel * L - cea * A)
-    unp1[2] = (1 - μl) * L
-    unp1[3] = P * exp_func(-cpa * A) + (1 - μa) * A
+    exp_taylor = taylor_expand(exp, 0; order)
+
+    # implicit form (output should be ≈ 0)
+    out[1] = -L1 + b * A * exp_taylor(-cel * L - cea * A)
+    out[2] = -P1 + (1 - μl) * L
+    out[3] = -A1 + P * exp_taylor(-cpa * A) + (1 - μa) * A
     return nothing
 end
 
@@ -59,25 +62,20 @@ function LPA_taylor_centred!(out, unp1, un, p; centres, order)
     l_centre = substitute(-cel * L - cea * A, p .=> centres)
     a_centre = substitute(-cpa * A, p .=> centres)
 
-    # exp_shift(-cel * L - cea * A, l_centre; order)
-    # exp_shift(-cpa * A, a_centre; order)
-
+    # implicit form (output should be ≈ 0)
     out[1] = -L1 + b * A * exp_shift(-cel * L - cea * A, l_centre; order)
     out[2] = -P1 + (1 - μl) * L
     out[3] = -A1 + P * exp_shift(-cpa * A, a_centre; order) + (1 - μa) * A
     return nothing
 end
 
-exp_shift(x, c; order) = taylor_expand(exp, c; order)(x-c)
+exp_shift(x, c; order) = taylor_expand(exp, c; order)(x - c)
 
 #----------------------------------------------
-function prolongate_LPA(vars, params, param_intervals; nsteps=3, order=2)
+function prolongate_LPA(vars, params, centres; nsteps=3, order)
     u = collect(zip(vars...))
     out = zeros(Num, 3)
     prolongations = Num[]
-
-    # halfway between upper and lower bounds of intervals
-    centres = map(p_i -> (p_i.ub - p_i.lb)/2, param_intervals)
 
     for i in 0:nsteps-1
         LPA_taylor_centred!(out, u[i+1], u[i], params; centres, order)
