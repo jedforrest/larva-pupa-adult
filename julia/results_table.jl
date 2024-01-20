@@ -15,7 +15,7 @@ function load_data(filename)
 end
 
 #------------------------------------------------------------
-df = load_data("tables/simulation_results.csv")
+df = load_data("tables/simulation_results_centering.csv")
 
 df_RMSE = @chain df begin
     select(:taylor_n, :interval_range, [:true_p, :pred_p] => ByRow((x, y) -> paramtuple((x - y) .^ 2)) => AsTable)

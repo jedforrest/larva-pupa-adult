@@ -7,14 +7,15 @@ using Random, Distributions
 using TaylorSeries
 using LinearAlgebra
 using DataFrames, CSV
+using Symbolics
+using RowEchelon
 
 include("LPA_models.jl")
-include("LPA_homotopy_solve.jl")
+include("taylorseries_patch.jl")
 
 #----------------------------------------------
 # simulation settings
 steps = 3 # simulation steps aka prolongs
-
 
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
@@ -22,8 +23,15 @@ original_u0 = [250., 5., 100.]
 original_params = [6.598, 1.209e-2, 1.155e-2, 4.7e-3, 0.2055, 7.629e-3]
 
 # HC symbolic variables and parameters
-HC_vars = @var L[0:steps] P[0:steps] A[0:steps]
-HC_params = @var b cel cea cpa μl μa
+# HC_vars = @var L[0:steps] P[0:steps] A[0:steps]
+# HC_params = @var b cel cea cpa μl μa
+sym_vars = @variables L[0:steps] P[0:steps] A[0:steps]
+sym_params = @variables b cel cea cpa μl μa
+sym_vars_flat = [L..., P..., A...]
+
+# presample all parameter sets
+# parameter p is sampled from a range [p ± 25%]
+sampled_params = [rand(Uniform(0.75p, 1.25p)) for p in original_params]
 #----------------------------------------------
 # results file headings
 df = DataFrame([
@@ -34,64 +42,43 @@ df = DataFrame([
     "true_parameters" => Vector{Float64}[],
     "pred_parameters" => Vector{Float64}[],
 ])
+allowmissing!(df, :pred_parameters)
 
-# presample all parameter sets
-# parameter p is sampled from a range [p ± 25%]
-sampled_params = [rand(Uniform(0.75p, 1.25p)) for p in original_params]
-
-# generates a matrix of values for LPA at t = 0, 1, ..., N
-true_params = original_params
-LPA_sol = run_simulation(LPA!, original_u0, true_params; steps)
-data_map = vcat((HC_vars[i] .=> LPA_sol[i,:] for i in eachindex(HC_vars))...)
+i = 1
+n = 5
+true_params = sampled_params
 
 # prolongate with taylor approximation order n
-n = 9
-eqns = prolongate_LPA(HC_vars, HC_params; nsteps=steps, order=n)
+p_interval(p) = RealInterval(rationalize.((0.75p, 1.25p))...)
+param_intervals = p_interval.(original_params)
+centres = map(p_i -> (p_i.ub - p_i.lb) / 2, param_intervals)
 
-# create and solve homotopy system
-# using known full rank column set
-pivots = [1,2,3,4,6,7]
-F = System(eqns[pivots]; variables=[HC_params...], parameters=[L..., P..., A...])
+eqns = prolongate_LPA(sym_vars, sym_params, centres; nsteps=steps, order=n);
 
-data = vcat(LPA_sol[:,:]'...)
+# generate a matrix of values for LPA at t = 0, 1, ..., N
+LPA_sol = run_simulation(LPA!, original_u0, true_params; steps)
+data = vcat(LPA_sol[:, :]'...)
 
-# res = parameter_homotopy_solve(F, data)
-    # Parameter homotopy method
-    # Solve the system in the Complex domain to find maximum number of solutions
-    # Use these solutions to find the Real solutions we want according to our data
-    # Our 'parameters' are the data from the simulation
-    p0 = 100 .* rand(ComplexF64, length(data))
-    @time result_p0 = HomotopyContinuation.solve(F, target_parameters = p0)
+eqns_subs = substitute(eqns, Dict(sym_vars_flat .=> data));
 
-    @time HomotopyContinuation.solve(
-        F,
-        solutions(result_p0);
-        start_parameters = p0,
-        target_parameters = data,
-        transform_result = (r,p) -> real_solutions(r),
-        flatten = true
-    )
+J = Symbolics.jacobian(eqns_subs, sym_params);
+# J = Symbolics.sparsejacobian(eqns_subs, sym_params)
 
+largeints = 2 .^ (1:6)
+J2 = substitute(J, Dict(sym_params .=> largeints))
+J3 = map(j -> Float64(j.val), J2')
+
+res, piv = rref_with_pivots(J3)
 res
+piv
+
+hc_eqns = convert_to_HC_expression.(eqns_subs)
+pivots = [1, 2, 3, 4, 6, 7]
+F = System(hc_eqns[pivots])
+J = jacobian(F)
+J2 = to_number.(J)
+
+
+res = HomotopyContinuation.solve(F)
 real_solutions(res)[1]
-nreal(res)
-nresults(res)
 
-res
-
-pred_params = nreal(res) > 0 ? real_solutions(res)[1] : missing
-
-
-# save results
-push!(df, (1, n, nsolutions(res), nreal(res), true_params, pred_params))
-
-
-
-# write results to CSV file
-CSV.write("tables/simulation_results.csv", df)
-
-
-@var x y a b
-F = System([x^2 - a, x * y - a + b]; variables=[x,y], parameters =[a,b])
-start_solutions = [[1, 1]]
-HomotopyContinuation.solve(F, start_solutions; start_parameters=[1, 0], target_parameters=[2, 5])
