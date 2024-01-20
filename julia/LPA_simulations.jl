@@ -36,15 +36,38 @@ df = DataFrame([
     "taylor_n" => Int[],
     "num_solutions" => Int[],
     "num_real_solutions" => Int[],
-    "true_parameters" => Vector{Float64}[],
-    "pred_parameters" => Vector{Float64}[],
+    "pred_parameters" => Vector{Number}[],
+    "sampled_parameters" => Vector{Float64}[],
+    "sampled_u0" => Vector{Float64}[],
 ])
-allowmissing!(df, :pred_parameters)
 
-@time for n in 1:Ntaylor
-    print("[Sim $n/$Ntaylor]")
-    # prolongate with taylor approximation order n
-    eqns = prolongate_LPA(HC_vars, HC_params; nsteps=steps, order=n)
+@time for I_range in interval_ranges
+    param_intervals = create_intervals.(original_params, I_range)
+    u0_intervals = create_intervals.(original_u0, I_range)
+
+    centres = if centre_exps
+        # halfway between upper and lower bounds of parameter intervals
+        map(p_i -> (p_i.ub - p_i.lb) / 2, param_intervals)
+    else
+        # no centering
+        zeros(length(sym_params))
+    end
+    
+    for n in 1:Ntaylor
+        print("[I=$I_range, N=$n]")
+        # prolongate with taylor approximation order n
+        eqns = prolongate_LPA(sym_vars, sym_params, centres; nsteps=steps, order=n)
+
+        for i in 1:Nsims
+            print(" $i")
+
+            # sample new parameters and ICs for given interval
+            sampled_params = sample_interval.(param_intervals)
+            sampled_u0 = sample_interval.(u0_intervals)
+
+            # generate simulated data for LPA at t = 0, 1, ..., N
+            LPA_sol = run_simulation(LPA!, sampled_u0, sampled_params; steps)
+            data = [LPA_sol[1, :]; LPA_sol[2, :]; LPA_sol[3, :]]
 
     # Create homotopy system from equations using known full rank column set
     pivots = [1,2,3,4,6,7]
