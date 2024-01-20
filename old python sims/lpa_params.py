@@ -27,3 +27,4 @@ initial_adult_population = 100
 initial_populations = (initial_larva_population, initial_pupa_population, initial_adult_population)
 
 # TODO: Add constants from footnote on covariance estimates of control/maninpulated
+
