@@ -79,47 +79,34 @@ def adult_poly_system_withapprox(degree, adult_pop_series, pupa_pop_series, c_pa
 
 
 ### The default values of off make sense for the default values in lpa_params. We should update this.
-def gensys(prolog, degree, offsum=[0,0,0], offmul = [1,1,1]):
+def gensys(prolog, degree, offsum=[0,0,0], offmul = [1,1,1], printout=False):
         L, P, A = simulate (prolog+1)
+
+        truesolLarva = "\ntruesolL = [{} ; {} ; {}];".format(lpa_params.c_el,lpa_params.c_ea,lpa_params.b)
+        truesolAdult = "\ntruesolA = [{} ; {}];".format(lpa_params.c_pa,lpa_params.mu_a)
+
         lpoly = larva_poly_system_withapprox(degree, A, L, offmul[0]*lpa_params.c_el+offsum[0], offmul[1]*lpa_params.c_ea+offsum[1])
-
-
-        
-        print("howoffsum = {};".format(offsum))
-        print("howoffmul = {};".format(offmul))
-        
-        truesolLarva = "solL = [{} ; {} ; {}];".format(lpa_params.c_el,lpa_params.c_ea,lpa_params.b)
-
-        print(truesolLarva)
-        
-        mysys = "fL = ["
+        L_sys = "fL = ["
         for poly in lpoly:
-            strpoly = str(poly)
-            strpoly = strpoly.replace("**","^")
-            strpoly = strpoly.replace("c_el","c[1]")
-            strpoly = strpoly.replace("c_ea","c[2]")
-            mysys +=  strpoly.replace("b","c[3]")
-            mysys += "; "
+            L_sys +=  str(poly).replace("**","^") + "; "
 
-        mysys = mysys[:-3]
-        mysys += "];"
-        print(mysys)
-            
-        
+        L_sys = L_sys[:-3]
+        L_sys += "];"
+ 
         apoly = adult_poly_system_withapprox(degree, A, P, offmul[2]*lpa_params.c_pa+offsum[2])
-
-        truesolAdult = "solA = [{} ; {}];".format(lpa_params.c_pa,lpa_params.mu_a)
-
-        print(truesolAdult)
-        
-        mysys = "fA = ["
+        A_sys = "fA = ["
         for poly in apoly:
-            strpoly = str(poly)
-            strpoly = strpoly.replace("**","^")
-            strpoly = strpoly.replace("c_pa","d[1]")
-            mysys +=  strpoly.replace("mu_a","d[2]")
-            mysys += "; "
+            A_sys +=  str(poly).replace("**","^") + "; "
 
-        mysys = mysys[:-3]
-        mysys += "];"
-        print(mysys)
+        A_sys = A_sys[:-3]
+        A_sys += "];"
+
+        if printout:
+            print("howoffsum = {};".format(offsum))
+            print("howoffmul = {};".format(offmul))
+            print(truesolLarva)
+            print(L_sys)
+            print(truesolAdult)
+            print(A_sys)
+
+        return L_sys, A_sys

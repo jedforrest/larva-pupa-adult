@@ -5,3 +5,4 @@ msolve
 
 .vscode
 Manifest.toml
+.CondaPkg/
