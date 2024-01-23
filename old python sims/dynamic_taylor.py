@@ -71,7 +71,7 @@ def adult_poly_system_withapprox(degree, adult_pop_series, pupa_pop_series, c_pa
         exp_input = -(c_pa_approx*p)
         exp_approx = taylor_approx(degree, exp_input)
         a_next = adult_pop_series[i+1]
-        poly = expand(a*(1-mu_a) + p * exp_approx(-c_pa*p) - a_next)
+        poly = expand(a*(1-mu_a) + p * exp_approx(-c_pa*a) - a_next)
         polynomials.append(poly)
         debug("basepoint approx = ", exp_input, color=32)
         debug("poly approx error = ", poly.subs(mu_a, lpa_params.mu_a).subs(c_pa, lpa_params.c_pa), color=33)
