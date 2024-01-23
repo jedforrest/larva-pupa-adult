@@ -78,8 +78,8 @@ end
 #----------------------------------------------
 # simulation settings
 nsteps = 3 # simulation steps aka prolongs
-Ntaylor = 7 # max taylor approx.
-Nsims = 10 # sims per parameter set
+Ntaylor = 10 # max taylor approx.
+Nsims = 100 # sims per parameter set
 interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
 
 # presample all parameter sets
