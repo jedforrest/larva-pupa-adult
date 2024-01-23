@@ -110,3 +110,21 @@ def gensys(prolog, degree, offsum=[0,0,0], offmul = [1,1,1], printout=False):
             print(A_sys)
 
         return L_sys, A_sys
+
+def all_poly_system_withapprox(degree, L, P, A, offmul = [1,1,1,1,1,1]):
+
+    lpoly = larva_poly_system_withapprox(degree, A, L, offmul[0]*lpa_params.c_el, offmul[1]*lpa_params.c_ea)
+    L_sys = "fL = ["
+    for poly in lpoly:
+        L_sys +=  str(poly).replace("**","^") + "; "
+    L_sys = L_sys[:-3]
+    L_sys += "];"
+
+    apoly = adult_poly_system_withapprox(degree, A, P, offmul[2]*lpa_params.c_pa)
+    A_sys = "fA = ["
+    for poly in apoly:
+        A_sys +=  str(poly).replace("**","^") + "; "
+    A_sys = A_sys[:-3]
+    A_sys += "];"
+
+    return L_sys, A_sys
