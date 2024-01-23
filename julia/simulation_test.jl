@@ -13,9 +13,11 @@ using RowEchelon
 include("LPA_models.jl")
 include("taylorseries_patch.jl")
 
+LPA_sol = run_simulation(LPA!, original_u0, original_params; steps=3)
+
 #----------------------------------------------
 # simulation settings
-steps = 3 # simulation steps aka prolongs
+nsteps = 3 # simulation steps aka prolongs
 
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
@@ -51,9 +53,9 @@ true_params = sampled_params
 # prolongate with taylor approximation order n
 p_interval(p) = RealInterval(rationalize.((0.75p, 1.25p))...)
 param_intervals = p_interval.(original_params)
-centres = map(p_i -> (p_i.ub - p_i.lb) / 2, param_intervals)
+midpoints = map(p_i -> (p_i.ub - p_i.lb) / 2, param_intervals)
 
-eqns = prolongate_LPA(sym_vars, sym_params, centres; nsteps=steps, order=n);
+eqns = prolongate_LPA(sym_vars, sym_params, midpoints; nsteps, order=n);
 
 # generate a matrix of values for LPA at t = 0, 1, ..., N
 LPA_sol = run_simulation(LPA!, original_u0, true_params; steps)
@@ -81,4 +83,3 @@ J2 = to_number.(J)
 
 res = HomotopyContinuation.solve(F)
 real_solutions(res)[1]
-

@@ -53,32 +53,32 @@ end
 
 # Taylor series approximated LPA model with centering at each step
 # Centering is determined by user inputed intervals (need not be exact)
-function LPA_taylor_centred!(out, unp1, un, p; centres, order)
+function LPA_taylor_centred!(out, unp1, un, p, midpoints; order)
     b, cel, cea, cpa, μl, μa = p # parameters
     L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
     # centres are 'initial guesses' for parameters within some interval
-    l_centre = substitute(-cel * L - cea * A, p .=> centres)
-    a_centre = substitute(-cpa * A, p .=> centres)
+    l_midpoints = substitute(-cel * L - cea * A, p .=> midpoints)
+    a_midpoints = substitute(-cpa * A, p .=> midpoints)
 
     # implicit form (output should be ≈ 0)
-    out[1] = -L1 + b * A * exp_shift(-cel * L - cea * A, l_centre; order)
+    out[1] = -L1 + b * A * exp_shift(-cel * L - cea * A, l_midpoints; order)
     out[2] = -P1 + (1 - μl) * L
-    out[3] = -A1 + P * exp_shift(-cpa * A, a_centre; order) + (1 - μa) * A
+    out[3] = -A1 + P * exp_shift(-cpa * A, a_midpoints; order) + (1 - μa) * A
     return nothing
 end
 
 exp_shift(x, c; order) = taylor_expand(exp, c; order)(x - c)
 
 #----------------------------------------------
-function prolongate_LPA(vars, params, centres; nsteps=3, order)
+function prolongate_LPA(vars, params, midpoints; nsteps=3, order)
     u = collect(zip(vars...))
     out = zeros(Num, 3)
     prolongations = Num[]
 
     for i in 0:nsteps-1
-        LPA_taylor_centred!(out, u[i+1], u[i], params; centres, order)
+        LPA_taylor_centred!(out, u[i+1], u[i], params, midpoints; order)
         append!(prolongations, out)
     end
     return prolongations
@@ -90,9 +90,10 @@ function convert_to_HC_expression(eqn)
     sub = substitute(eqn, Dict(eqn_vars .=> hc_vars))
 end
 
-function run_simulation(model, u0, params; steps=10)
-    prob = DiscreteProblem(model, u0, (0., steps), params)
+function run_simulation(model, u0, params; nsteps=10)
+    prob = DiscreteProblem(model, u0, (0., nsteps), params)
     sol = OrdinaryDiffEq.solve(prob, FunctionMap())
+    return [sol[i, :] for i in 1:length(u0)]
 end
 
 function verify_solution(eqns, sym_vars, data, sym_params, sol_params)
