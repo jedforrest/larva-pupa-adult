@@ -22,7 +22,7 @@ k, ε = lagrange_error_bound(exp, c; a=0, tol=1e-3)
 #----------------------------------------------
 # Original LPA model (exp version)
 function LPA!(du, u, p, t)
-    b, c_el, c_ea, mu_l, c_pa, mu_a = p
+    b, c_el, c_ea, c_pa, mu_l, mu_a = p
     L, P, A = u
 
     du[1] = b * A * exp(-c_el * L - c_ea * A)
@@ -32,7 +32,7 @@ end
 
 # Taylor series approximated LPA model
 function LPA_taylor!(out, unp1, un, p; order)
-    b, c_el, c_ea, mu_l, c_pa, mu_a = p
+    b, c_el, c_ea, c_pa, mu_l, mu_a = p
     L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
@@ -48,7 +48,7 @@ end
 # Taylor series approximated LPA model with centering at each step
 # Centering is determined by user inputed intervals (need not be exact)
 function LPA_taylor_centred!(out, unp1, un, p, midpoints; order)
-    b, c_el, c_ea, mu_l, c_pa, mu_a = p
+    b, c_el, c_ea, c_pa, mu_l, mu_a = p
     L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 

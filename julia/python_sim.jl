@@ -34,8 +34,8 @@ original_params = NamedTuple([
     :b => 6.598,
     :c_el => 1.209e-2,
     :c_ea => 1.155e-2,
-    :mu_l => 0.2055,
     :c_pa => 4.7e-3,
+    :mu_l => 0.2055,
     :mu_a => 7.629e-3,
 ])
 # L0, P0, A0
@@ -82,9 +82,9 @@ Random.seed!(1234);
 
 # simulation settings
 nsteps = 3 # max simulation steps aka prolongs
-Ntaylor = 10 # max taylor approx.
+Ntaylor = 3 # max taylor approx.
 Nsims = 10 # sims per parameter set
-interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
+interval_ranges = [0.05]#, 0.1, 0.2, 0.25, 0.5]
 
 #----------------------------------------------
 # results file headings
@@ -103,7 +103,6 @@ df = DataFrame([
     "A_all_real_solutions" => Vector{Vector{Float64}}[],
     "offmul" => Vector{Float64}[],
 ]);
-allowmissing!(df, r"pred_parameters");
 
 @time for I_range in interval_ranges
     print("[I=$I_range]")
@@ -124,7 +123,7 @@ allowmissing!(df, r"pred_parameters");
         # generate simulated data for LPA at t = 0, 1, ..., N
         L_data, P_data, A_data = run_simulation(LPA!, sampled_u0, sampled_params; nsteps)
 
-        for n in 1:Ntaylor
+        for n in 3:Ntaylor
             # poly subsystems for L, P, A
             py_sys = all_poly_sys(n, L_data, P_data, A_data, offmul)
             L_sys, P_sys, A_sys = python_sys_to_hc(py_sys)
@@ -165,7 +164,8 @@ allowmissing!(df, r"pred_parameters");
 end
 
 df
+df.pred_parameters
 
 # UTC year-month-day-hour
 timestamp() = Dates.format(now(UTC), "yy-mm-ddTHH")
-CSV.write("tables/simulation_results_$(timestamp()).csv", df)
+CSV.write("tables/simulation_results_deg=2_$(timestamp()).csv", df)

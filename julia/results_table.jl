@@ -4,24 +4,28 @@ using DataFrames, CSV, Chain
 
 param_names = [:b :cel :cea :cpa :μl :μa]
 paramtuple(x) = NamedTuple{Tuple(param_names)}(Tuple(x))
+PTuple = NamedTuple{(:b, :c_el, :c_ea, :c_pa, :mu_l, :mu_a)}
 
 function load_data(filename)
     evalparse(str::String) = eval(Meta.parse(str))
     @chain filename begin
         DataFrame(CSV.File(_))
-        dropmissing
-        transform([:sampled_parameters, :L_pred_parameters, :A_pred_parameters] .=> ByRow(evalparse) .=> [:true_p, :L_pred_p, :A_pred_p])
+        transform([:sampled_parameters, :pred_parameters] .=>
+            ByRow(evalparse) .=> [:true_p, :pred_p])
     end
 end
 
 #------------------------------------------------------------
-df = load_data("tables/simulation_results_python_100_random.csv")
+df = load_data("tables/simulation_results_24-01-24T12.csv")
 
 names(df)
 
+x=df.true_p[1]
+y=df.pred_p[1]
+x-y
 
 df_RMSE = @chain df begin
-    select(:taylor_n, :interval_range, [:true_p, :pred_p] => ByRow((x, y) -> paramtuple((x - y) .^ 2)) => AsTable)
+    select(:taylor_n, :interval_range, [:true_p, :pred_p] => ByRow((x, y) -> ((x - y) .^ 2)) => AsTable)
     groupby([:taylor_n, :interval_range])
     combine(nrow => :count, Not(:taylor_n, :interval_range) .=> sqrt ∘ mean => x -> x * "_RMSE")
 end
