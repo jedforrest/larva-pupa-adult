@@ -1,6 +1,6 @@
 # eventually read from a file
 # for now I'm running LPA_simulations.jl interactively
-using DataFrames, CSV, Chain
+using DataFrames, CSV, Chain, Statistics
 
 param_names = [:b :cel :cea :cpa :μl :μa]
 paramtuple(x) = NamedTuple{Tuple(param_names)}(Tuple(x))
