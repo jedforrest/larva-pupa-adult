@@ -14,19 +14,19 @@ include("taylorseries_patch.jl")
 #----------------------------------------------
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
-# b, cel, cea, cpa, μl, μa
-original_params = [6.598, 1.209e-2, 1.155e-2, 4.7e-3, 0.2055, 7.629e-3]
+# b, cea, cel, μl, cpa, μa
+original_params = [6.598, 1.155e-2, 1.209e-2, 0.2055, 4.7e-3, 7.629e-3]
 
 # simulation settings
 steps = 3 # simulation steps aka prolongs
-Ntaylor = 7 # max taylor approx.
-Nsims = 20 # sims per parameter set
-interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
+Ntaylor = 1 # max taylor approx.
+Nsims = 1 # sims per parameter set
+interval_ranges = [0.05]#, 0.1, 0.2, 0.25, 0.5]
 centre_exps = true
 
 # HC symbolic variables and parameters
 sym_vars = @variables L[0:steps] P[0:steps] A[0:steps]
-sym_params = @variables b cel cea cpa μl μa
+sym_params = @variables b cea cel μl cpa μa
 sym_vars_flat = [L..., P..., A...]
 
 # presample all parameter sets
@@ -57,6 +57,9 @@ df = DataFrame([
         zeros(length(sym_params))
     end
     
+    println("Centres for Taylor:")
+    println(centres)
+    println("===================")
 
     for n in 1:Ntaylor
         print("[I=$I_range, N=$n]")
@@ -70,23 +73,42 @@ df = DataFrame([
             sampled_params = sample_interval.(param_intervals)
             sampled_u0 = sample_interval.(u0_intervals)
 
+            println("Sampled parameters:")
+            println(sampled_params)
+            println("==================")
+  
+       	    println("Sampled IC:")
+       	    println(sampled_u0)
+       	    println("==================")             
+
             # generate simulated data for LPA at t = 0, 1, ..., N
             LPA_sol = run_simulation(LPA!, sampled_u0, sampled_params; steps)
             data = [LPA_sol[1, :]; LPA_sol[2, :]; LPA_sol[3, :]]
+            println("Data:")
+            println(data)
+            println("================")
+
+            println("Equations before data:")
+            println(eqns)
+            println("=================")
 
             # Create homotopy system from equations using known full rank column set
+
             eqns_with_data = substitute(eqns, Dict(sym_vars_flat .=> data))
             hc_eqns = convert_to_HC_expression.(eqns_with_data)
             pivots = [1,2,3,4,6,7]
             F = System(hc_eqns[pivots])
 
             # Solve HC system and keep real solutions (or first complex)
-            res = HomotopyContinuation.solve(F;
-                show_progress = false,
-                stop_early_cb = r -> is_real(r) # stop once first real solution is found
+            println("System of polynomials to solve:")
+            println(F)
+            println("=========================")
+            res = HomotopyContinuation.solve(F#;
+#                show_progress = false#,
+      #          stop_early_cb = r -> is_real(r) # stop once first real solution is found
             )
             pred_params = nreal(res) > 0 ? real_solutions(res)[1] : solutions(res)[1]
-
+            println(real_solutions(res))
             # save results
             push!(df, (I_range, n, nsolutions(res), nreal(res), 
                 pred_params, sampled_params, sampled_u0))
