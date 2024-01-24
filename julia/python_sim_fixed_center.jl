@@ -29,23 +29,23 @@ function python_sys_to_hc(py_sys, vars=nothing)
 end
 
 #----------------------------------------------
-# b c_ea c_el mu_l c_pa mu_a
+# b c_el c_ea mu_l c_pa mu_a
 original_params = NamedTuple([
     :b => 6.598,
     :c_el => 1.209e-2,
     :c_ea => 1.155e-2,
-    :c_pa => 4.7e-3,
     :mu_l => 0.2055,
+    :c_pa => 4.7e-3,        
     :mu_a => 7.629e-3,
 ])
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
 
 # HomotopyContinuation Variables
-hc_vars = @var b c_el c_ea c_pa mu_l mu_a
+hc_vars = @var b c_el c_ea mu_l c_pa mu_a
 
 # parameter tuples
-PTuple = NamedTuple{(:b, :c_el, :c_ea, :c_pa, :mu_l, :mu_a)}
+PTuple = NamedTuple{(:b, :c_el, :c_ea, :mu_l, :c_pa, :mu_a)}
 
 # parameter p is sampled from range [x ± r%]
 function create_intervals(r, interval_centre=values(original_params))
@@ -111,7 +111,7 @@ df = DataFrame([
     param_intervals = create_intervals(I_range)
 
     # used to centre taylor exp in all_poly_sys
-    offmul = rand(Uniform(1 - I_range, 1 + I_range), 3)
+    offmul = [1.0, 1.0, 1.0]
 
     for i in 1:Nsims
         print(" $i")
@@ -167,4 +167,4 @@ df
 
 # UTC year-month-day-hour
 timestamp() = Dates.format(now(UTC), "yy-mm-ddTHH")
-CSV.write("tables/simulation_results_fixed_cetner_$(timestamp()).csv", df)
+CSV.write("tables/simulation_results_$(timestamp()).csv", df)
