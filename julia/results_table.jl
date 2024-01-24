@@ -7,7 +7,7 @@ paramtuple(x) = NamedTuple{Tuple(param_names)}(Tuple(x))
 PTuple = NamedTuple{(:b, :c_el, :c_ea, :c_pa, :mu_l, :mu_a)}
 
 function load_data(filename)
-    evalparse(str::String) = eval(Meta.parse(str))
+    evalparse(str::String) = collect(eval(Meta.parse(str)))
     @chain filename begin
         DataFrame(CSV.File(_))
         transform([:sampled_parameters, :pred_parameters] .=>
@@ -16,7 +16,7 @@ function load_data(filename)
 end
 
 #------------------------------------------------------------
-df = load_data("tables/simulation_results_24-01-24T12.csv")
+df = load_data("tables/simulation_results_24-01-24T13.csv")
 
 names(df)
 

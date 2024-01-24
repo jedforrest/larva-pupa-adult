@@ -82,9 +82,9 @@ Random.seed!(1234);
 
 # simulation settings
 nsteps = 3 # max simulation steps aka prolongs
-Ntaylor = 3 # max taylor approx.
+Ntaylor = 7 # max taylor approx.
 Nsims = 10 # sims per parameter set
-interval_ranges = [0.05]#, 0.1, 0.2, 0.25, 0.5]
+interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
 
 #----------------------------------------------
 # results file headings
@@ -123,7 +123,7 @@ df = DataFrame([
         # generate simulated data for LPA at t = 0, 1, ..., N
         L_data, P_data, A_data = run_simulation(LPA!, sampled_u0, sampled_params; nsteps)
 
-        for n in 3:Ntaylor
+        for n in 1:Ntaylor
             # poly subsystems for L, P, A
             py_sys = all_poly_sys(n, L_data, P_data, A_data, offmul)
             L_sys, P_sys, A_sys = python_sys_to_hc(py_sys)
@@ -164,8 +164,7 @@ df = DataFrame([
 end
 
 df
-df.pred_parameters
 
 # UTC year-month-day-hour
 timestamp() = Dates.format(now(UTC), "yy-mm-ddTHH")
-CSV.write("tables/simulation_results_deg=2_$(timestamp()).csv", df)
+CSV.write("tables/simulation_results_$(timestamp()).csv", df)
