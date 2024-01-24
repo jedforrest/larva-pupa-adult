@@ -58,6 +58,18 @@ def larva_poly_system_withapprox(degree, adult_pop_series, larva_pop_series, c_e
         debug("poly approx error = ", poly.subs(b, lpa_params.b).subs(c_el, lpa_params.c_el).subs(c_ea, lpa_params.c_ea), color=33)
     return polynomials
 
+def pupa_poly_system(larva_pop_series, pupa_pop_series):
+    # linear sytem so no need for exp approximation
+    mu_l = symbols(f"mu_l")
+    polynomials = []
+    for i, l in enumerate(larva_pop_series):
+        if i == len(larva_pop_series)-1:
+            break
+        p_next = pupa_pop_series[i+1]
+        poly = expand(l * (1 - mu_l) - p_next)
+        polynomials.append(poly)
+    return polynomials
+
 
 def adult_poly_system_withapprox(degree, adult_pop_series, pupa_pop_series, c_pa_approx):
     c_pa, mu_a = symbols(f"c_pa mu_a")
@@ -117,14 +129,18 @@ def all_poly_system_withapprox(degree, L, P, A, offmul = [1,1,1]):
     L_sys = "fL = ["
     for poly in lpoly:
         L_sys +=  str(poly).replace("**","^") + "; "
-    L_sys = L_sys[:-3]
     L_sys += "];"
+
+    ppoly = pupa_poly_system(L, P)
+    P_sys = "fP = ["
+    for poly in ppoly:
+        P_sys +=  str(poly).replace("**","^") + "; "
+    P_sys += "];"
 
     apoly = adult_poly_system_withapprox(degree, A, P, offmul[2]*lpa_params.c_pa)
     A_sys = "fA = ["
     for poly in apoly:
         A_sys +=  str(poly).replace("**","^") + "; "
-    A_sys = A_sys[:-3]
     A_sys += "];"
 
-    return L_sys, A_sys
+    return L_sys, P_sys, A_sys

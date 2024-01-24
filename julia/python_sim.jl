@@ -1,7 +1,7 @@
 using OrdinaryDiffEq
 using HomotopyContinuation
 using Random, Distributions
-using DataFrames, CSV
+using DataFrames, CSV, Dates
 
 include("LPA_models.jl")
 #----------------------------------------------
@@ -20,7 +20,6 @@ sys.path.append(pwd()*"./old_python_sims")
 
 @py import dynamic_taylor
 importlib.reload(dynamic_taylor) # for interactive code reloading
-
 all_poly_sys = pyimport("dynamic_taylor" => "all_poly_system_withapprox")
 
 function python_sys_to_hc(py_sys, vars=nothing)
@@ -30,8 +29,6 @@ function python_sys_to_hc(py_sys, vars=nothing)
 end
 
 #----------------------------------------------
-Random.seed!(1234);
-
 # b c_ea c_el mu_l c_pa mu_a
 original_params = NamedTuple([
     :b => 6.598,
@@ -60,7 +57,7 @@ function sample_intervals(intervals)
 end
 
 function solve_and_filter_solutions(sys, intervals)
-    result = HomotopyContinuation.solve(sys)
+    result = HomotopyContinuation.solve(sys, show_progress = false)
 
     # only interested in real solutions
     all_real_sols = real_solutions(result)
@@ -81,9 +78,11 @@ function filter_solutions(real_sols, intervals)
 end
 
 #----------------------------------------------
+Random.seed!(1234);
+
 # simulation settings
 nsteps = 3 # max simulation steps aka prolongs
-Ntaylor = 5 # max taylor approx.
+Ntaylor = 10 # max taylor approx.
 Nsims = 10 # sims per parameter set
 interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
 
@@ -94,10 +93,13 @@ df = DataFrame([
     "interval_range" => Float64[],
     "taylor_n" => Int[],
     "L_num_real_solutions" => Int[],
+    "P_num_real_solutions" => Int[],
     "A_num_real_solutions" => Int[],
-    "sampled_parameters" => Any[],
     "pred_parameters" => Any[],
+    "sampled_parameters" => Any[],
+    "param_intevals" => Any[],
     "L_all_real_solutions" => Vector{Vector{Float64}}[],
+    "P_all_real_solutions" => Vector{Vector{Float64}}[],
     "A_all_real_solutions" => Vector{Vector{Float64}}[],
     "offmul" => Vector{Float64}[],
 ]);
@@ -123,30 +125,40 @@ allowmissing!(df, r"pred_parameters");
         L_data, P_data, A_data = run_simulation(LPA!, sampled_u0, sampled_params; nsteps)
 
         for n in 1:Ntaylor
-            # println("N=$n]")
-
             # poly subsystems for L, P, A
             py_sys = all_poly_sys(n, L_data, P_data, A_data, offmul)
-            L_sys, A_sys = python_sys_to_hc(py_sys)
+            L_sys, P_sys, A_sys = python_sys_to_hc(py_sys)
 
             # Solve HC system and keep real solutions
             L_sym_vars = Symbol.(variables(L_sys))
             L_pred, L_all_real = solve_and_filter_solutions(L_sys, param_intervals[L_sym_vars])
+
+            # 3 eqns 1 var - overdetermined
+            P_sym_vars = Symbol.(variables(P_sys))
+            P_pred, P_all_real = solve_and_filter_solutions([P_sys[1]], param_intervals[P_sym_vars])
 
             # 3 eqns 2 vars - overdetermined
             A_sym_vars = Symbol.(variables(A_sys))
             A_pred, A_all_real = solve_and_filter_solutions(A_sys[1:2], param_intervals[A_sym_vars])
 
             # save results (as named tuples)
-
             pred_params = NamedTuple([
                 L_sym_vars .=> L_pred;
-                :mu_l => 0.; # TODO
+                P_sym_vars .=> P_pred;
                 A_sym_vars .=> A_pred;
             ])
 
-            push!(df, (i, I_range, n, length(L_all_real), length(A_all_real), sampled_params, pred_params,
-                L_all_real, A_all_real, offmul))
+            push!(df, (i, I_range, n,
+                length(L_all_real),
+                length(P_all_real),
+                length(A_all_real),
+                pred_params,
+                sampled_params,
+                param_intervals,
+                L_all_real,
+                A_all_real,
+                P_all_real,
+                offmul))
         end
     end
     println()
@@ -154,4 +166,6 @@ end
 
 df
 
-CSV.write("tables/simulation_results_python_ntuple.csv", df)
+# UTC year-month-day-hour
+timestamp() = Dates.format(now(UTC), "yy-mm-ddTHH")
+CSV.write("tables/simulation_results_$(timestamp()).csv", df)
