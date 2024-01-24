@@ -155,8 +155,8 @@ df = DataFrame([
                 sampled_params,
                 param_intervals,
                 L_all_real,
-                A_all_real,
                 P_all_real,
+                A_all_real,
                 offmul))
         end
     end
