@@ -4,23 +4,30 @@ using DataFrames, CSV, Chain
 
 param_names = [:b :cel :cea :cpa :μl :μa]
 paramtuple(x) = NamedTuple{Tuple(param_names)}(Tuple(x))
+PTuple = NamedTuple{(:b, :c_el, :c_ea, :c_pa, :mu_l, :mu_a)}
 
 function load_data(filename)
-    evalparse(str::String) = eval(Meta.parse(str))
+    evalparse(str::String) = collect(eval(Meta.parse(str)))
     @chain filename begin
         DataFrame(CSV.File(_))
-        subset(:taylor_n => n -> .!iseven.(n)) # no real solutions found for even n
-        transform([:sampled_parameters, :pred_parameters] .=> ByRow(evalparse) .=> [:true_p, :pred_p])
+        transform([:sampled_parameters, :pred_parameters] .=>
+            ByRow(evalparse) .=> [:true_p, :pred_p])
     end
 end
 
 #------------------------------------------------------------
-df = load_data("tables/simulation_results_centering.csv")
+df = load_data("tables/simulation_results_24-01-24T13.csv")
+
+names(df)
+
+x=df.true_p[1]
+y=df.pred_p[1]
+x-y
 
 df_RMSE = @chain df begin
-    select(:taylor_n, :interval_range, [:true_p, :pred_p] => ByRow((x, y) -> paramtuple((x - y) .^ 2)) => AsTable)
+    select(:taylor_n, :interval_range, [:true_p, :pred_p] => ByRow((x, y) -> ((x - y) .^ 2)) => AsTable)
     groupby([:taylor_n, :interval_range])
     combine(nrow => :count, Not(:taylor_n, :interval_range) .=> sqrt ∘ mean => x -> x * "_RMSE")
 end
 
-CSV.write("tables/error_table_centering_odd_only.csv", df_RMSE)
+CSV.write("tables/error_table_results_python_100_random.csv", df_RMSE)

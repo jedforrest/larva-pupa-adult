@@ -2,12 +2,6 @@
 # Model from 'Modeling Populations of Flour Beetles' (Robertson, 2009)
 # Parameter values from 'Chaotic Dynamics in an Insect Population' (Constantino et al., 1997)
 
-# Original parameters
-# L0, P0, A0
-original_u0 = [250., 5., 100.]
-# b, cel, cea, cpa, μl, μa
-original_params = [6.598, 1.209e-2, 1.155e-2, 4.7e-3, 0.2055, 7.629e-3]
-
 #----------------------------------------------
 function lagrange_error_bound(f, c; a=0, tol=1e-3, max_k=19)
     # for function f(x) x∈[a,c] determine order k such that erro |ε| < tol
@@ -28,44 +22,44 @@ k, ε = lagrange_error_bound(exp, c; a=0, tol=1e-3)
 #----------------------------------------------
 # Original LPA model (exp version)
 function LPA!(du, u, p, t)
-    b, cel, cea, cpa, μl, μa = p
+    b, c_el, c_ea, c_pa, mu_l, mu_a = p
     L, P, A = u
 
-    du[1] = b * A * exp(-cel * L - cea * A)
-    du[2] = (1 - μl) * L
-    du[3] = P * exp(-cpa * A) + (1 - μa) * A
+    du[1] = b * A * exp(-c_el * L - c_ea * A)
+    du[2] = (1 - mu_l) * L
+    du[3] = P * exp(-c_pa * A) + (1 - mu_a) * A
 end
 
 # Taylor series approximated LPA model
 function LPA_taylor!(out, unp1, un, p; order)
-    b, cel, cea, cpa, μl, μa = p # parameters
+    b, c_el, c_ea, c_pa, mu_l, mu_a = p
     L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
     exp_taylor = taylor_expand(exp, 0; order)
 
     # implicit form (output should be ≈ 0)
-    out[1] = -L1 + b * A * exp_taylor(-cel * L - cea * A)
-    out[2] = -P1 + (1 - μl) * L
-    out[3] = -A1 + P * exp_taylor(-cpa * A) + (1 - μa) * A
+    out[1] = -L1 + b * A * exp_taylor(-c_el * L - c_ea * A)
+    out[2] = -P1 + (1 - mu_l) * L
+    out[3] = -A1 + P * exp_taylor(-c_pa * A) + (1 - mu_a) * A
     return nothing
 end
 
 # Taylor series approximated LPA model with centering at each step
 # Centering is determined by user inputed intervals (need not be exact)
 function LPA_taylor_centred!(out, unp1, un, p, midpoints; order)
-    b, cel, cea, cpa, μl, μa = p # parameters
+    b, c_el, c_ea, c_pa, mu_l, mu_a = p
     L1, P1, A1 = unp1 # u_n+1
     L, P, A = un # u_n
 
     # centres are 'initial guesses' for parameters within some interval
-    l_midpoints = substitute(-cel * L - cea * A, p .=> midpoints)
-    a_midpoints = substitute(-cpa * A, p .=> midpoints)
+    l_midpoints = substitute(-c_el * L - c_ea * A, p .=> midpoints)
+    a_midpoints = substitute(-c_pa * A, p .=> midpoints)
 
     # implicit form (output should be ≈ 0)
-    out[1] = -L1 + b * A * exp_shift(-cel * L - cea * A, l_midpoints; order)
-    out[2] = -P1 + (1 - μl) * L
-    out[3] = -A1 + P * exp_shift(-cpa * A, a_midpoints; order) + (1 - μa) * A
+    out[1] = -L1 + b * A * exp_shift(-c_el * L - c_ea * A, l_midpoints; order)
+    out[2] = -P1 + (1 - mu_l) * L
+    out[3] = -A1 + P * exp_shift(-c_pa * A, a_midpoints; order) + (1 - mu_a) * A
     return nothing
 end
 
