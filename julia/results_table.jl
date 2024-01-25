@@ -1,10 +1,10 @@
 # eventually read from a file
 # for now I'm running LPA_simulations.jl interactively
-using DataFrames, CSV, Chain
+using DataFrames, CSV, Chain, Statistics
 
-param_names = [:b :cel :cea :cpa :μl :μa]
+param_names = [:b :cel :cea :μl :cpa :μa]
 paramtuple(x) = NamedTuple{Tuple(param_names)}(Tuple(x))
-PTuple = NamedTuple{(:b, :c_el, :c_ea, :c_pa, :mu_l, :mu_a)}
+PTuple = NamedTuple{(:b, :c_el, :c_ea, :mu_l, :c_pa, :mu_a)}
 
 function load_data(filename)
     evalparse(str::String) = collect(eval(Meta.parse(str)))

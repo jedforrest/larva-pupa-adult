@@ -32,20 +32,20 @@ end
 # b c_ea c_el mu_l c_pa mu_a
 original_params = NamedTuple([
     :b => 6.598,
-    :c_el => 1.209e-2,
     :c_ea => 1.155e-2,
-    :c_pa => 4.7e-3,
+    :c_el => 1.209e-2,
     :mu_l => 0.2055,
+    :c_pa => 4.7e-3,        
     :mu_a => 7.629e-3,
 ])
 # L0, P0, A0
 original_u0 = [250., 5., 100.]
 
 # HomotopyContinuation Variables
-hc_vars = @var b c_el c_ea c_pa mu_l mu_a
+hc_vars = @var b c_ea c_el mu_l c_pa mu_a
 
 # parameter tuples
-PTuple = NamedTuple{(:b, :c_el, :c_ea, :c_pa, :mu_l, :mu_a)}
+PTuple = NamedTuple{(:b, :c_ea, :c_el, :mu_l, :c_pa, :mu_a)}
 
 # parameter p is sampled from range [x ± r%]
 function create_intervals(r, interval_centre=values(original_params))
@@ -82,8 +82,8 @@ Random.seed!(1234);
 
 # simulation settings
 nsteps = 3 # max simulation steps aka prolongs
-Ntaylor = 7 # max taylor approx.
-Nsims = 10 # sims per parameter set
+Ntaylor = 10 # max taylor approx.
+Nsims = 100 # sims per parameter set
 interval_ranges = [0.05, 0.1, 0.2, 0.25, 0.5]
 
 #----------------------------------------------
@@ -186,8 +186,7 @@ namevars = "classic"
 
             # 3 eqns 2 vars - overdetermined
             A_sym_vars = Symbol.(variables(A_sys))
-            A_pred, A_all_real = solve_and_filter_solutions(A_sys[1:2], param_intervals[A_sym_vars])
-
+	    A_pred, A_all_real = solve_and_filter_solutions(A_sys[1:2], param_intervals[A_sym_vars])
             # save results (as named tuples)
             pred_params = NamedTuple([
                 L_sym_vars .=> L_pred;
@@ -203,8 +202,8 @@ namevars = "classic"
                 sampled_params,
                 param_intervals,
                 L_all_real,
-                A_all_real,
                 P_all_real,
+                A_all_real,
                 offmul))
         end
     end
