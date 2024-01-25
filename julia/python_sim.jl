@@ -104,6 +104,54 @@ df = DataFrame([
     "offmul" => Vector{Float64}[],
 ]);
 
+function solve_overdetermined_L(fL)
+    
+function solve_L(f; relativeLogPresKer = 2)
+    
+    
+    degC3 = maximum(degree.(monomials(f[1])))-1
+    splitDeg(nn) = [div(nn,degC3) mod(nn,degC3)]
+    ltpoints(nn) = getLatticePoints(newtonPolytope(f[1]^splitDeg(nn)[1]*(c[1] + 200*c[2] - 10)^splitDeg(nn)[2],c))
+
+    # we estimate the degree of regularity using the approximated HS
+    t = Taylor1(Float64, size(f,1)*degC3)
+    HS = (1-t^degC3)^size(f,1)/((1-t^degC3)*(1-t)^2)
+    candReg = [i for i in range(1,10) if HS[i] <= 0][1] 
+
+    # In case our guess is not good, we keep increasing the deg of regularity
+    for k in range(1,degC3+1)
+        # We construct the monomials for the matrix
+        A₀ = ltpoints(1)
+        D = ltpoints(candReg)
+        E0 = ltpoints(candReg-1)
+        Ei = ltpoints(candReg-degC3)
+        E = pushfirst!([Ei for i = 1:size(f, 1)],E0);
+        # this creates the matrix from which we want to compute the kernel
+        Sylv = EigenvalueSolver.getRes(f, EigenvalueSolver.exptomon(D, c),  [EigenvalueSolver.exptomon(e, c) for e ∈ E[2:end]], c; complex = false)
+        # we use svd to compute the kernel
+        svdobj = GenericSVD.svd(transpose(Sylv), full = true);
+
+        sortedDiff = sort([[log10(svdobj.S[i])-log10(svdobj.S[i+1]),i] for i in range(1,size(svdobj.S,1)-1)])
+        if sortedDiff[end][2] == size(svdobj.S,1)-1 && sortedDiff[end][1] - sortedDiff[end-1][1] > relativeLogPresKer
+            N = transpose(svdobj.V[:, end:end])
+            ee = exponents.(EigenvalueSolver.exptomon(D, c));
+            # we compute the approximation by inverting the monomial map
+
+            c1pos = findall(x->x==[1,0,1], ee)[1]
+            c2pos = findall(x->x==[0,1,1], ee)[1]
+            candApprox = [N[c1pos]/N[2],N[c2pos]/N[2],N[2]/N[1]]
+
+            return candApprox[1], candApprox[2], candApprox[3]
+        else
+            candReg += 1
+        end
+    end
+    error("More than one solution, increase precision")
+end
+
+    
+namevars = "classic"
+
 @time for I_range in interval_ranges
     print("[I=$I_range]")
 
@@ -125,7 +173,7 @@ df = DataFrame([
 
         for n in 1:Ntaylor
             # poly subsystems for L, P, A
-            py_sys = all_poly_sys(n, L_data, P_data, A_data, offmul)
+            py_sys = all_poly_sys(n, L_data, P_data, A_data, offmul, namevars)
             L_sys, P_sys, A_sys = python_sys_to_hc(py_sys)
 
             # Solve HC system and keep real solutions
