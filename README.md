@@ -10,8 +10,9 @@ This repository documents this work.
 
 * [python_sim_fixed_center.jl](/julia/python_sim_fixed_center.jl) -- main code to run in Julia that carries out testing of the quality of parameter estimation as described in Section 4 of the paper "Symbolic-numeric algorithm for parameter estimation in discrete-time
  models with exp" by Yosef Berman, Joshua Forrest, Matthew Grote, Alexey Ovchinnikov, and Sonia Rueda
-* [error_table_means_medians.csv](/tables/error_table_means_medians.csv) -- table with errors as described in the above paper
-* [simulation_results_fixed_center_24-01-24T21.csv](/tables/simulation_results_fixed_center_24-01-24T21.csv) -- table of randomized parameter estimation experiments as described in the above paper
+* [simulation_results_fixed_center_24-01-24T21.csv](/tables/simulation_results_fixed_center_24-01-24T21.csv) -- table of randomized parameter estimation experiments as described in the above paper. Such a file is produced by the above Julia code
+* [results_table_means.jl](/julia/results_table_means.jl) -- code to run in Julia to output mean and median errors based on the "simulation_results_fixed_center_xxx.csv" file
+* [error_table_means_medians.csv](/tables/error_table_means_medians.csv) -- table with errors as described in the above paper produced by the above Julia code
 * [lpa_params.py](/old_python_sims/lpa_params.py) -- parameters as they are in the paper "Chaotic Dynamics in an Insect Population" by Costantino et al
 * [simulation.py](/old_python_sims/simulation.py) -- run the simulation using floating point numbers
 * [homotopy_continuation.py](/old_python_sims/homotopy_continuation.py) -- call HC.jl see Julia setup below
