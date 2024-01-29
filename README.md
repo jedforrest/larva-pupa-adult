@@ -14,6 +14,7 @@ This repository documents this work.
 * [results_table_means.jl](/julia/results_table_means.jl) -- code to run in Julia to output mean and median errors based on the "simulation_results_fixed_center_xxx.csv" file
 * [error_table_means_medians.csv](/tables/error_table_means_medians.csv) -- table with errors as described in the above paper produced by the above Julia code
 * [lpa_params.py](/old_python_sims/lpa_params.py) -- parameters as they are in the paper "Chaotic Dynamics in an Insect Population" by Costantino et al
+* [LPA example in maple.mpl](LPA example in maple.mpl) -- Maple script supporting the running example from the above paper
 * [simulation.py](/old_python_sims/simulation.py) -- run the simulation using floating point numbers
 * [homotopy_continuation.py](/old_python_sims/homotopy_continuation.py) -- call HC.jl see Julia setup below
 * [dynamic_taylor.py](/old_python_sims/dynamic_taylor.py) -- run dynamic taylor algorithm
