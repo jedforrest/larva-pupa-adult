@@ -8,10 +8,14 @@ This repository documents this work.
 
 ## Index
 
-* [lpa_params.py](/lpa_params.py) -- parameters as they are in the paper constantino_chaotic_dynamics_science_1997.pdf
-* [simulation.py](/simulation.py) -- run the simulation using floating point numbers
-* [homotopy_continuation.py](/homotopy_continuation.py) -- call HC.jl see Julia setup below
-* [dynamic_taylor.py](/dynamic_taylor.py) -- run dynamic taylor algorithm
+* [python_sim_fixed_center.jl](/julia/python_sim_fixed_center.jl) -- main code to run in Julia that carries out testing of the quality of parameter estimation as described in Section 4 of the paper "Symbolic-numeric algorithm for parameter estimation in discrete-time
+ models with exp" by Yosef Berman, Joshua Forrest, Matthew Grote, Alexey Ovchinnikov, and Sonia Rueda
+* [error_table_means_medians.csv](/tables/error_table_means_medians.csv) -- table with errors as described in the above paper
+* [simulation_results_fixed_center_24-01-24T21.csv](/tables/simulation_results_fixed_center_24-01-24T21.csv) -- table of randomized parameter estimation experiments as described in the above paper
+* [lpa_params.py](/old_python_sims/lpa_params.py) -- parameters as they are in the paper "Chaotic Dynamics in an Insect Population" by Costantino et al
+* [simulation.py](/old_python_sims/simulation.py) -- run the simulation using floating point numbers
+* [homotopy_continuation.py](/old_python_sims/homotopy_continuation.py) -- call HC.jl see Julia setup below
+* [dynamic_taylor.py](/old_python_sims/dynamic_taylor.py) -- run dynamic taylor algorithm
 
 ## Python Setup
 From the command line:
