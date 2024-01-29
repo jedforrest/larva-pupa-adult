@@ -33,3 +33,7 @@ This installs all missing packages from `Project.toml`. Alternatively, from the 
 (larva-pupa-adult) pkg> instantiate
 ```
 
+## Over-determined systems solving
+
+This approach was based on:
+[1] Bender, M.R. and Telen, S., 2021. Yet another eigenvalue algorithm for solving polynomial systems. arXiv preprint arXiv:2105.08472.
