@@ -4,7 +4,7 @@ We are using the Larva-Pupa-Adult (LPA) equation as a test case for designing
 novel algorithms for solving parameter estimation problems for transcendental
 systems which are amenable to polynomial approximation.
 
-This repository documents this work.
+This repository documents this work. The Julia code has been tested on Linux and might not work on Mac OS or Windows.
 
 ## Index
 
