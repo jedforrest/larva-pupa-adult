@@ -15,8 +15,8 @@ using CondaPkg
 @py import sympy
 @py import importlib
 
-sys.path.append(pwd()*"/../old_python_sims")
-sys.path.append(pwd()*"./old_python_sims")
+sys.path.append(pwd()*"/../python_sims")
+sys.path.append(pwd()*"./python_sims")
 
 @py import dynamic_taylor
 importlib.reload(dynamic_taylor) # for interactive code reloading
