@@ -8,10 +8,10 @@ This repository documents this work. The Julia code has been tested on Linux and
 
 ## Index
 
-* [python_sim_fixed_center.jl](/julia/python_sim_fixed_center.jl) -- main code to run in Julia that carries out testing of the quality of parameter estimation as described in Section 4 of the paper "Symbolic-numeric algorithm for parameter estimation in discrete-time
+* [python_sim_fixed_center.jl](/julia/python_sim_fixed_center.jl) -- main code to run in Julia that carries out testing of the quality of parameter estimation as described in Section 4 of the paper "Symbolic-numeric algorithm for parameter estimation in discrete-time; produces a filed named "/tables/simulation_results_fixed_center_date/time stamp.csv".
  models with exp" by Yosef Berman, Joshua Forrest, Matthew Grote, Alexey Ovchinnikov, and Sonia Rueda
 * [simulation_results_fixed_center_24-01-24T21.csv](/tables/simulation_results_fixed_center_24-01-24T21.csv) -- table of randomized parameter estimation experiments as described in the above paper. Such a file is produced by the above Julia code
-* [results_table_means.jl](/julia/results_table_means.jl) -- code to run in Julia to output mean and median errors based on the "simulation_results_fixed_center_xxx.csv" file
+* [results_table_means.jl](/julia/results_table_means.jl) -- code to run in Julia to output mean and median errors based on the "simulation_results_fixed_center_xxx.csv" file; produces the file "/tables/error_table_means_medians.csv"
 * [error_table_means_medians.csv](/tables/error_table_means_medians.csv) -- table with errors as described in the above paper produced by the above Julia code
 * [lpa_params.py](/python_sims/lpa_params.py) -- parameters as they are in the paper "Chaotic Dynamics in an Insect Population" by Costantino et al
 * [LPA_example_Maple.mpl](LPA_example_Maple.mpl) -- Maple script supporting the running example from the above paper
